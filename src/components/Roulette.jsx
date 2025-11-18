@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import styled, { keyframes } from 'styled-components'
 
 const spin = keyframes`
@@ -98,6 +98,7 @@ function Roulette({ items, onSpin, isSpinning, selectedItem, onSpinComplete }) {
   const [currentRotation, setCurrentRotation] = useState(0)
   const [targetRotation, setTargetRotation] = useState(0)
   const [isAnimating, setIsAnimating] = useState(false)
+  const popupTimerRef = useRef(null)
   
   // 회전 후 최종 위치에서 포인터가 가리키는 아이템을 계산하는 함수
   // 가장 간단한 로직: 룰렛이 멈춘 후 12시 포인터(270도)가 가리키는 영역 찾기
@@ -274,17 +275,34 @@ function Roulette({ items, onSpin, isSpinning, selectedItem, onSpinComplete }) {
           console.table(debugInfo)
           console.log('당첨 경품:', winner ? winner.name : 'null')
           
+          // 룰렛이 완전히 멈춘 후 0.5초 뒤에 팝업 표시
           if (winner && onSpinComplete) {
-            onSpinComplete(winner)
+            popupTimerRef.current = setTimeout(() => {
+              onSpinComplete(winner)
+              popupTimerRef.current = null
+            }, 500) // 0.5초 지연
           } else if (!winner) {
             console.error('당첨 경품을 찾을 수 없습니다!')
           }
         }
       }, 4000) // 4초 애니메이션
       
-      return () => clearTimeout(timer)
+      return () => {
+        clearTimeout(timer)
+        // 팝업 타이머는 cleanup에서 클리어하지 않음 (1초 후 팝업이 뜨도록 유지)
+      }
     }
   }, [isAnimating, targetRotation, items, onSpinComplete])
+
+  // 컴포넌트 언마운트 시 팝업 타이머 정리
+  useEffect(() => {
+    return () => {
+      if (popupTimerRef.current) {
+        clearTimeout(popupTimerRef.current)
+        popupTimerRef.current = null
+      }
+    }
+  }, [])
   
   if (availableItems.length === 0) {
     return (
