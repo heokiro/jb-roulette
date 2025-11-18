@@ -224,6 +224,7 @@ function App() {
                   isSpinning={isSpinning}
                   selectedItem={selectedItem}
                   onSpinComplete={handleSpinComplete}
+                  isWinnerModalOpen={isWinnerModalOpen}
                 />
                 <ExplainImage src="/images/explain.png" alt="설명" />
               </RouletteContainer>

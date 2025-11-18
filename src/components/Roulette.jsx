@@ -16,8 +16,8 @@ const RouletteContainer = styled.div`
   height: 80vw;
   min-width: 300px;
   min-height: 300px;
-  max-width: min(80vw, 80vh);
-  max-height: min(80vw, 80vh);
+  max-width: min(60vh, 80vh);
+  max-height: min(60vh, 80vh);
   
   @media (max-width: 768px) {
     width: 80vw;
@@ -49,10 +49,11 @@ const CenterButton = styled.button`
   min-width: 80px;
   min-height: 80px;
   border-radius: 50%;
-  background-image: url('/images/button.png');
+  background-image: url(${props => props.showButtonImage ? '/images/Ellipse.png' : '/images/button.png'});
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
+  background-color: ${props => props.showButtonImage ? 'white' : 'transparent'};
   border: none;
   cursor: ${props => props.disabled ? 'not-allowed' : 'pointer'};
   display: flex;
@@ -74,8 +75,15 @@ const CenterButton = styled.button`
   }
   
   &:disabled {
-    opacity: 0.7;
+    opacity: 1;
   }
+`
+
+const CenterButtonImage = styled.img`
+  width: 50%;
+  height: 60%;
+  object-fit: contain;
+  transition: opacity 0.3s ease;
 `
 
 const Pointer = styled.img`
@@ -94,11 +102,61 @@ const Pointer = styled.img`
 const gradient1 = 'linear-gradient(135deg, #4037D3 0%, #FB6211 100%)'
 const gradient2 = 'linear-gradient(135deg, #FB6213 0%, #E22E59 100%)'
 
-function Roulette({ items, onSpin, isSpinning, selectedItem, onSpinComplete }) {
+function Roulette({ items, onSpin, isSpinning, selectedItem, onSpinComplete, isWinnerModalOpen }) {
   const [currentRotation, setCurrentRotation] = useState(0)
   const [targetRotation, setTargetRotation] = useState(0)
   const [isAnimating, setIsAnimating] = useState(false)
+  const [currentImageIndex, setCurrentImageIndex] = useState(0)
+  const [showButtonImage, setShowButtonImage] = useState(false)
   const popupTimerRef = useRef(null)
+  const imageIntervalRef = useRef(null)
+  const wasModalOpenRef = useRef(false)
+  
+  // 룰렛이 돌아가는 동안 이미지 순환
+  useEffect(() => {
+    if (isAnimating) {
+      const images = ['img1.png', 'img2.png', 'img3.png', 'img4.png']
+      setCurrentImageIndex(0)
+      setShowButtonImage(true)
+      wasModalOpenRef.current = false
+      
+      // 0.2초마다 이미지 변경 (4초 애니메이션 동안 순환)
+      imageIntervalRef.current = setInterval(() => {
+        setCurrentImageIndex(prev => {
+          const nextIndex = (prev + 1) % images.length
+          return nextIndex
+        })
+      }, 200)
+      
+      return () => {
+        if (imageIntervalRef.current) {
+          clearInterval(imageIntervalRef.current)
+          imageIntervalRef.current = null
+        }
+      }
+    } else {
+      // 애니메이션이 끝나면 마지막 이미지(img4.png, 인덱스 3)로 고정
+      setCurrentImageIndex(3)
+      if (imageIntervalRef.current) {
+        clearInterval(imageIntervalRef.current)
+        imageIntervalRef.current = null
+      }
+    }
+  }, [isAnimating])
+  
+  // 모달 상태 추적 및 이미지 표시 제어
+  useEffect(() => {
+    if (isWinnerModalOpen) {
+      // 모달이 열렸을 때
+      wasModalOpenRef.current = true
+      setShowButtonImage(true)
+    } else if (wasModalOpenRef.current && !isAnimating) {
+      // 모달이 닫혔고, 이전에 모달이 열려있었고, 애니메이션이 끝났을 때만 button.png로 복귀
+      setShowButtonImage(false)
+      setCurrentImageIndex(0)
+      wasModalOpenRef.current = false
+    }
+  }, [isWinnerModalOpen, isAnimating])
   
   // 회전 후 최종 위치에서 포인터가 가리키는 아이템을 계산하는 함수
   // 가장 간단한 로직: 룰렛이 멈춘 후 12시 포인터(270도)가 가리키는 영역 찾기
@@ -294,12 +352,16 @@ function Roulette({ items, onSpin, isSpinning, selectedItem, onSpinComplete }) {
     }
   }, [isAnimating, targetRotation, items, onSpinComplete])
 
-  // 컴포넌트 언마운트 시 팝업 타이머 정리
+  // 컴포넌트 언마운트 시 팝업 타이머 및 이미지 인터벌 정리
   useEffect(() => {
     return () => {
       if (popupTimerRef.current) {
         clearTimeout(popupTimerRef.current)
         popupTimerRef.current = null
+      }
+      if (imageIntervalRef.current) {
+        clearInterval(imageIntervalRef.current)
+        imageIntervalRef.current = null
       }
     }
   }, [])
@@ -457,6 +519,10 @@ function Roulette({ items, onSpin, isSpinning, selectedItem, onSpinComplete }) {
             // 텍스트가 원의 중심을 향하려면 centerRad + 180도로 회전
             const textRotation = (centerRad * 180 / Math.PI) + 180
             
+            // 첫 번째 경품의 시작 경계선은 그림자 없이 (마지막 경품과의 경계에서 마지막 경품이 위에 보이도록)
+            const isFirstItem = index === 0
+            const isLastItem = index === itemAngles.length - 1
+            
             return (
               <g key={index}>
                 {/* 구역에 입체감 그림자 효과 */}
@@ -466,16 +532,19 @@ function Roulette({ items, onSpin, isSpinning, selectedItem, onSpinComplete }) {
                   filter="url(#sectorShadow)"
                 />
                 {/* 구역 경계선에 그림자 효과 (원의 중심에서 가장자리까지) */}
-                <line
-                  x1="50"
-                  y1="50"
-                  x2={startX}
-                  y2={startY}
-                  stroke="rgba(0, 0, 0, 0.2)"
-                  strokeWidth="0.8"
-                  strokeLinecap="round"
-                  filter="url(#borderShadow)"
-                />
+                {/* 첫 번째 경품의 시작 경계선은 그림자 없음 (마지막 경품의 끝 경계선 그림자만 표시) */}
+                {!isFirstItem && (
+                  <line
+                    x1="50"
+                    y1="50"
+                    x2={startX}
+                    y2={startY}
+                    stroke="rgba(0, 0, 0, 0.2)"
+                    strokeWidth="0.8"
+                    strokeLinecap="round"
+                    filter="url(#borderShadow)"
+                  />
+                )}
                 <line
                   x1="50"
                   y1="50"
@@ -511,7 +580,15 @@ function Roulette({ items, onSpin, isSpinning, selectedItem, onSpinComplete }) {
       <CenterButton 
         onClick={onSpin}
         disabled={isSpinning || isAnimating}
-      />
+        showButtonImage={showButtonImage}
+      >
+        {showButtonImage && (
+          <CenterButtonImage 
+            src={`/images/${['img1.png', 'img2.png', 'img3.png', 'img4.png'][currentImageIndex]}`}
+            alt=""
+          />
+        )}
+      </CenterButton>
       <Pointer src="/images/Polygon.png" alt="포인터" />
     </RouletteContainer>
   )
