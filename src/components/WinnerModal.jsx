@@ -66,22 +66,22 @@ const WinnerName = styled.div`
   position: absolute;
   top: 58%;
   left: 50%;
-  background: white;
-  border-radius: 2vw;
-  padding: 2vh;
   font-size: clamp(28px, 4.5vw, 44px);
   font-weight: bold;
-  color: #667eea;
-  box-shadow: 0 0.5vh 1.5vh rgba(0, 0, 0, 0.2);
+  color: white;
+  text-align: center;
   animation: ${fadeInName} 0.5s ease 0.2s both;
   pointer-events: none;
+  line-height: 1.4;
 `
 
 function WinnerModal({ winner, onClose }) {
   return (
     <ModalOverlay onClick={onClose}>
       <ModalContent onClick={onClose}>
-        <WinnerName>{winner.name}</WinnerName>
+        <WinnerName>
+          <span style={{ whiteSpace: 'nowrap' }}>{winner.name} 당첨!</span>
+        </WinnerName>
       </ModalContent>
     </ModalOverlay>
   )
