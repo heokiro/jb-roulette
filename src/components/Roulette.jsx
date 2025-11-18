@@ -560,11 +560,10 @@ function Roulette({ items, onSpin, isSpinning, selectedItem, onSpinComplete, isW
                   y1="50"
                   x2={startX}
                   y2={startY}
-                  stroke="rgba(0, 0, 0, 0.2)"
-                  strokeWidth="0.8"
+                  stroke="rgba(0, 0, 0, 0.1)"
+                  strokeWidth="0.1"
                   strokeLinecap="round"
-                //   filter={isFirstItem ? "url(#borderShadowToLast)" : "url(#borderShadow)"}
-                  filter='url(#borderShadow)'
+                  filter={isFirstItem ? "url(#borderShadowToLast)" : "url(#borderShadow)"}
                 />
                 {/* 마지막 상품의 끝 경계선은 그림자 없음 */}
                 <line
@@ -573,9 +572,9 @@ function Roulette({ items, onSpin, isSpinning, selectedItem, onSpinComplete, isW
                   x2={endX - 0.2}
                   y2={endY}
                   stroke="rgba(0, 0, 0, 0.2)"
-                  strokeWidth="1"
+                  strokeWidth="0.5"
                   strokeLinecap="round"
-                  filter='url(#borderShadowToLast)'
+                  filter={isLastItem ? undefined : "url(#borderShadow)"}
                 />
                 <text
                   x={textX}
