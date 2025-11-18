@@ -168,7 +168,7 @@ function App() {
       return
     }
 
-    // 랜덤 당첨 계산 (회전 시작 전에 결정)
+    // 랜덤으로 회전만 시작 (당첨 경품은 룰렛이 멈춘 후 실제 12시 위치에서 결정)
     const totalQuantity = availableItems.reduce((sum, item) => sum + item.quantity, 0)
     let random = Math.random() * totalQuantity
     
@@ -182,27 +182,24 @@ function App() {
       }
     }
 
-    // 선택된 아이템 설정 후 회전 시작
+    // 선택된 아이템 설정 후 회전 시작 (회전 각도 계산용)
     setSelectedItem(newSelectedItem)
     setIsSpinning(true)
+  }
 
-    // 회전 애니메이션 후 당첨 결과 표시
-    setTimeout(() => {
-      setIsSpinning(false)
-      setWinner(newSelectedItem)
-      setIsWinnerModalOpen(true)
-      
-      // 수량 감소
-      setItems(prevItems => 
-        prevItems.map(item => 
-          item.name === newSelectedItem.name 
-            ? { ...item, quantity: Math.max(0, item.quantity - 1) }
-            : item
-        )
+  const handleSpinComplete = (winnerItem) => {
+    setIsSpinning(false)
+    setWinner(winnerItem)
+    setIsWinnerModalOpen(true)
+    
+    // 수량 감소
+    setItems(prevItems => 
+      prevItems.map(item => 
+        item.name === winnerItem.name 
+          ? { ...item, quantity: Math.max(0, item.quantity - 1) }
+          : item
       )
-      
-      // selectedItem은 유지하여 룰렛이 그대로 멈춰있도록 함
-    }, 4000) // 4초 회전 애니메이션
+    )
   }
 
   const handleWinnerModalClose = () => {
@@ -220,15 +217,16 @@ function App() {
         <img src="/images/settings.png" alt="설정" />
       </SettingsButton>
 
-      <RouletteContainer>
-        <Roulette 
-          items={items} 
-          onSpin={handleSpin}
-          isSpinning={isSpinning}
-          selectedItem={selectedItem}
-        />
-        <ExplainImage src="/images/explain.png" alt="설명" />
-      </RouletteContainer>
+              <RouletteContainer>
+                <Roulette 
+                  items={items} 
+                  onSpin={handleSpin}
+                  isSpinning={isSpinning}
+                  selectedItem={selectedItem}
+                  onSpinComplete={handleSpinComplete}
+                />
+                <ExplainImage src="/images/explain.png" alt="설명" />
+              </RouletteContainer>
 
       {isSettingsOpen && (
         <SettingsModal
