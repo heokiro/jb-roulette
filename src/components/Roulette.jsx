@@ -361,15 +361,27 @@ function Roulette({ items, onSpin, isSpinning, selectedItem, onSpinComplete }) {
       >
         <svg width="100%" height="100%" viewBox="0 0 100 100" style={{ position: 'absolute', top: 0, left: 0 }}>
           <defs>
-            {/* 그림자 효과 필터 (선은 보이지 않고 그림자만) */}
-            <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
-              <feGaussianBlur in="SourceAlpha" stdDeviation="0.8"/>
-              <feOffset dx="0.4" dy="0.4" result="offsetblur"/>
+            {/* 경계선 그림자 효과 필터 */}
+            <filter id="borderShadow" x="-50%" y="-50%" width="200%" height="200%">
+              <feGaussianBlur in="SourceAlpha" stdDeviation="1.2"/>
+              <feOffset dx="0.6" dy="0.6" result="offsetblur"/>
               <feComponentTransfer>
-                <feFuncA type="linear" slope="0.6"/>
+                <feFuncA type="linear" slope="0.7"/>
               </feComponentTransfer>
               <feMerge>
                 <feMergeNode in="offsetblur"/>
+              </feMerge>
+            </filter>
+            {/* 구역 입체감 그림자 효과 (한쪽에 그림자) */}
+            <filter id="sectorShadow" x="-50%" y="-50%" width="200%" height="200%">
+              <feGaussianBlur in="SourceAlpha" stdDeviation="1.5"/>
+              <feOffset dx="0.8" dy="0.8" result="offsetblur"/>
+              <feComponentTransfer>
+                <feFuncA type="linear" slope="0.5"/>
+              </feComponentTransfer>
+              <feMerge>
+                <feMergeNode in="offsetblur"/>
+                <feMergeNode in="SourceGraphic"/>
               </feMerge>
             </filter>
             {itemAngles.map(({ gradient }, index) => {
@@ -429,32 +441,32 @@ function Roulette({ items, onSpin, isSpinning, selectedItem, onSpinComplete }) {
             
             return (
               <g key={index}>
+                {/* 구역에 입체감 그림자 효과 */}
                 <path
                   d={path}
                   fill={`url(#${gradientId})`}
+                  filter="url(#sectorShadow)"
                 />
-                {/* 구역 경계선에 그림자 효과만 (원의 중심에서 가장자리까지) */}
+                {/* 구역 경계선에 그림자 효과 (원의 중심에서 가장자리까지) */}
                 <line
                   x1="50"
                   y1="50"
                   x2={startX}
                   y2={startY}
-                  stroke="black"
-                  strokeWidth="1"
+                  stroke="rgba(0, 0, 0, 0.4)"
+                  strokeWidth="0.8"
                   strokeLinecap="round"
-                  strokeOpacity="0"
-                  filter="url(#shadow)"
+                  filter="url(#borderShadow)"
                 />
                 <line
                   x1="50"
                   y1="50"
                   x2={endX}
                   y2={endY}
-                  stroke="black"
-                  strokeWidth="1"
+                  stroke="rgba(0, 0, 0, 0.4)"
+                  strokeWidth="0.8"
                   strokeLinecap="round"
-                  strokeOpacity="0"
-                  filter="url(#shadow)"
+                  filter="url(#borderShadow)"
                 />
                 <text
                   x={textX}
