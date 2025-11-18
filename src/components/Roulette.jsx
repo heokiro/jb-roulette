@@ -364,9 +364,9 @@ function Roulette({ items, onSpin, isSpinning, selectedItem, onSpinComplete }) {
             {/* 경계선 그림자 효과 필터 */}
             <filter id="borderShadow" x="-50%" y="-50%" width="200%" height="200%">
               <feGaussianBlur in="SourceAlpha" stdDeviation="1.2"/>
-              <feOffset dx="0.6" dy="0.6" result="offsetblur"/>
+              <feOffset dx="0.8" dy="0.8" result="offsetblur"/>
               <feComponentTransfer>
-                <feFuncA type="linear" slope="0.7"/>
+                <feFuncA type="linear" slope="0.4"/>
               </feComponentTransfer>
               <feMerge>
                 <feMergeNode in="offsetblur"/>
@@ -375,9 +375,9 @@ function Roulette({ items, onSpin, isSpinning, selectedItem, onSpinComplete }) {
             {/* 구역 입체감 그림자 효과 (한쪽에 그림자) */}
             <filter id="sectorShadow" x="-50%" y="-50%" width="200%" height="200%">
               <feGaussianBlur in="SourceAlpha" stdDeviation="1.5"/>
-              <feOffset dx="0.8" dy="0.8" result="offsetblur"/>
+              <feOffset dx="0.1" dy="0.1" result="offsetblur"/>
               <feComponentTransfer>
-                <feFuncA type="linear" slope="0.5"/>
+                <feFuncA type="linear" slope="0.3"/>
               </feComponentTransfer>
               <feMerge>
                 <feMergeNode in="offsetblur"/>
@@ -453,7 +453,7 @@ function Roulette({ items, onSpin, isSpinning, selectedItem, onSpinComplete }) {
                   y1="50"
                   x2={startX}
                   y2={startY}
-                  stroke="rgba(0, 0, 0, 0.4)"
+                  stroke="rgba(0, 0, 0, 0.2)"
                   strokeWidth="0.8"
                   strokeLinecap="round"
                   filter="url(#borderShadow)"
@@ -463,7 +463,7 @@ function Roulette({ items, onSpin, isSpinning, selectedItem, onSpinComplete }) {
                   y1="50"
                   x2={endX}
                   y2={endY}
-                  stroke="rgba(0, 0, 0, 0.4)"
+                  stroke="rgba(0, 0, 0, 0.2)"
                   strokeWidth="0.8"
                   strokeLinecap="round"
                   filter="url(#borderShadow)"
