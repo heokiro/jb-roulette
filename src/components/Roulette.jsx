@@ -452,6 +452,28 @@ function Roulette({ items, onSpin, isSpinning, selectedItem, onSpinComplete, isW
                 <feMergeNode in="offsetblur"/>
               </feMerge>
             </filter>
+            {/* 경계선 반대 방향 그림자 효과 필터 (첫 번째 상품의 시작 경계선용) */}
+            <filter id="borderShadowReverse" x="-50%" y="-50%" width="200%" height="200%">
+              <feGaussianBlur in="SourceAlpha" stdDeviation="1.2"/>
+              <feOffset dx="-0.8" dy="-0.8" result="offsetblur"/>
+              <feComponentTransfer>
+                <feFuncA type="linear" slope="0.4"/>
+              </feComponentTransfer>
+              <feMerge>
+                <feMergeNode in="offsetblur"/>
+              </feMerge>
+            </filter>
+            {/* 상품1에서 상품N 쪽으로 향하는 특별한 그림자 효과 필터 */}
+            <filter id="borderShadowToLast" x="-50%" y="-50%" width="200%" height="200%">
+              <feGaussianBlur in="SourceAlpha" stdDeviation="1.2"/>
+              <feOffset dx="-0.8" dy="0" result="offsetblur"/>
+              <feComponentTransfer>
+                <feFuncA type="linear" slope="0.4"/>
+              </feComponentTransfer>
+              <feMerge>
+                <feMergeNode in="offsetblur"/>
+              </feMerge>
+            </filter>
             {/* 구역 입체감 그림자 효과 (한쪽에 그림자) */}
             <filter id="sectorShadow" x="-50%" y="-50%" width="200%" height="200%">
               <feGaussianBlur in="SourceAlpha" stdDeviation="1.5"/>
@@ -519,7 +541,7 @@ function Roulette({ items, onSpin, isSpinning, selectedItem, onSpinComplete, isW
             // 텍스트가 원의 중심을 향하려면 centerRad + 180도로 회전
             const textRotation = (centerRad * 180 / Math.PI) + 180
             
-            // 첫 번째 경품의 시작 경계선은 그림자 없이 (마지막 경품과의 경계에서 마지막 경품이 위에 보이도록)
+            // 첫 번째 상품과 마지막 상품 확인
             const isFirstItem = index === 0
             const isLastItem = index === itemAngles.length - 1
             
@@ -532,40 +554,40 @@ function Roulette({ items, onSpin, isSpinning, selectedItem, onSpinComplete, isW
                   filter="url(#sectorShadow)"
                 />
                 {/* 구역 경계선에 그림자 효과 (원의 중심에서 가장자리까지) */}
-                {/* 첫 번째 경품의 시작 경계선은 그림자 없음 (마지막 경품의 끝 경계선 그림자만 표시) */}
-                {!isFirstItem && (
-                  <line
-                    x1="50"
-                    y1="50"
-                    x2={startX}
-                    y2={startY}
-                    stroke="rgba(0, 0, 0, 0.2)"
-                    strokeWidth="0.8"
-                    strokeLinecap="round"
-                    filter="url(#borderShadow)"
-                  />
-                )}
+                {/* 첫 번째 상품의 시작 경계선은 상품N 쪽으로 향하는 특별한 그림자 적용 */}
                 <line
                   x1="50"
                   y1="50"
-                  x2={endX}
-                  y2={endY}
+                  x2={startX}
+                  y2={startY}
                   stroke="rgba(0, 0, 0, 0.2)"
                   strokeWidth="0.8"
                   strokeLinecap="round"
-                  filter="url(#borderShadow)"
+                //   filter={isFirstItem ? "url(#borderShadowToLast)" : "url(#borderShadow)"}
+                  filter='url(#borderShadow)'
+                />
+                {/* 마지막 상품의 끝 경계선은 그림자 없음 */}
+                <line
+                  x1="49.8"
+                  y1="50"
+                  x2={endX - 0.2}
+                  y2={endY}
+                  stroke="rgba(0, 0, 0, 0.2)"
+                  strokeWidth="1"
+                  strokeLinecap="round"
+                  filter='url(#borderShadowToLast)'
                 />
                 <text
                   x={textX}
                   y={textY}
                   fill="white"
-                  fontSize="4"
+                  fontSize="4.5"
                   fontWeight="bold"
                   textAnchor="middle"
                   dominantBaseline="middle"
                   transform={`rotate(${textRotation}, ${textX}, ${textY})`}
                   style={{
-                    textShadow: '0 0 2px rgba(0, 0, 0, 0.5)',
+                    textShadow: '0 0 2px rgba(0, 0, 0, 0.7)',
                     pointerEvents: 'none',
                     userSelect: 'none'
                   }}

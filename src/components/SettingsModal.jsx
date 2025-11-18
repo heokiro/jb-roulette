@@ -180,8 +180,20 @@ function SettingsModal({ items, onSave, onClose }) {
   const handleItemChange = (index, field, value) => {
     const newItems = [...localItems]
     if (field === 'quantity') {
-      const numValue = parseInt(value) || 0
-      newItems[index][field] = Math.max(0, numValue)
+      // 빈 문자열이면 빈 문자열로 유지
+      if (value === '' || value === null || value === undefined) {
+        newItems[index][field] = ''
+        setLocalItems(newItems)
+        return
+      }
+      // 앞에 0이 붙은 경우 제거 (예: "05" -> "5")
+      const trimmedValue = value.replace(/^0+/, '') || '0'
+      const numValue = parseInt(trimmedValue, 10)
+      if (isNaN(numValue)) {
+        newItems[index][field] = ''
+      } else {
+        newItems[index][field] = Math.max(0, numValue)
+      }
     } else {
       newItems[index][field] = value
     }
@@ -198,8 +210,13 @@ function SettingsModal({ items, onSave, onClose }) {
   }
 
   const handleSave = () => {
-    // 빈 상품명 제거
-    const validItems = localItems.filter(item => item.name.trim() !== '' && item.quantity > 0)
+    // 빈 상품명과 수량이 0이거나 빈 문자열인 항목 제거
+    const validItems = localItems
+      .map(item => ({
+        ...item,
+        quantity: item.quantity === '' || item.quantity === null || item.quantity === undefined ? 0 : Number(item.quantity)
+      }))
+      .filter(item => item.name.trim() !== '' && item.quantity > 0)
     onSave(validItems.length > 0 ? validItems : [{ name: '상품 1', quantity: 1 }])
   }
 
@@ -224,7 +241,7 @@ function SettingsModal({ items, onSave, onClose }) {
                 type="number"
                 placeholder="수량"
                 min="0"
-                value={item.quantity}
+                value={item.quantity === 0 || item.quantity === '' ? '' : item.quantity}
                 onChange={(e) => handleItemChange(index, 'quantity', e.target.value)}
               />
               <DeleteButton onClick={() => handleDelete(index)}>

@@ -1,16 +1,54 @@
-# React + Vite
+# JetBrains Roulette
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+룰렛 게임 애플리케이션
 
-Currently, two official plugins are available:
+## 개발
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+```bash
+npm install
+npm run dev
+```
 
-## React Compiler
+## 빌드
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+```bash
+npm run build
+```
 
-## Expanding the ESLint configuration
+## Firebase 호스팅 배포
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+### 수동 배포
+
+```bash
+npm run deploy
+```
+
+### 자동 배포 설정 (GitHub Actions)
+
+이 프로젝트는 GitHub Actions를 통해 자동 배포가 설정되어 있습니다. `main` 또는 `master` 브랜치에 push하면 자동으로 Firebase Hosting에 배포됩니다.
+
+#### 설정 방법
+
+1. **Firebase Service Account 키 생성**
+   - [Firebase Console](https://console.firebase.google.com/) 접속
+   - 프로젝트 설정 > 서비스 계정 탭으로 이동
+   - "새 비공개 키 생성" 클릭하여 JSON 파일 다운로드
+
+2. **GitHub Secrets 설정**
+   - GitHub 저장소로 이동
+   - Settings > Secrets and variables > Actions
+   - "New repository secret" 클릭
+   - Name: `FIREBASE_SERVICE_ACCOUNT`
+   - Value: 다운로드한 JSON 파일의 전체 내용을 복사하여 붙여넣기
+   - "Add secret" 클릭
+
+3. **자동 배포 확인**
+   - `main` 또는 `master` 브랜치에 코드를 push하면 자동으로 배포가 시작됩니다
+   - Actions 탭에서 배포 진행 상황을 확인할 수 있습니다
+
+## 기술 스택
+
+- React
+- Vite
+- Styled Components
+- Firebase Hosting
