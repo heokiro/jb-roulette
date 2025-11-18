@@ -58,5 +58,10 @@ jobs:
       - name: Deploy to Firebase Hosting
         env:
           FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
-        run: firebase deploy --only hosting --project jb-roullet --token "$FIREBASE_TOKEN"
+        run: |
+          if [ -z "$FIREBASE_TOKEN" ]; then
+            echo "Error: FIREBASE_TOKEN is not set"
+            exit 1
+          fi
+          firebase deploy --only hosting --project jb-roullet
 

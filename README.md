@@ -29,17 +29,20 @@ npm run deploy
 
 #### 설정 방법
 
-1. **Firebase Service Account 키 생성**
-   - [Firebase Console](https://console.firebase.google.com/) 접속
-   - 프로젝트 설정 > 서비스 계정 탭으로 이동
-   - "새 비공개 키 생성" 클릭하여 JSON 파일 다운로드
+1. **Firebase 토큰 생성**
+   - 로컬 터미널에서 다음 명령 실행:
+     ```bash
+     firebase login:ci
+     ```
+   - 브라우저가 열리면 Google 계정으로 로그인하고 권한을 부여하세요
+   - 터미널에 출력된 토큰을 복사하세요
 
 2. **GitHub Secrets 설정**
    - GitHub 저장소로 이동
    - Settings > Secrets and variables > Actions
    - "New repository secret" 클릭
-   - Name: `FIREBASE_SERVICE_ACCOUNT`
-   - Value: 다운로드한 JSON 파일의 전체 내용을 복사하여 붙여넣기
+   - Name: `FIREBASE_TOKEN`
+   - Secret: 앞서 생성한 토큰을 붙여넣기
    - "Add secret" 클릭
 
 3. **자동 배포 확인**
