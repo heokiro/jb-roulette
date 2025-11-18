@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import styled from 'styled-components'
 import Roulette from './components/Roulette'
 import SettingsModal from './components/SettingsModal'
@@ -87,7 +87,7 @@ const SettingsButton = styled.button`
 `
 
 const RouletteContainer = styled.div`
-  margin-top: 12vh;
+  margin-top: 10vh;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -117,16 +117,41 @@ const ExplainImage = styled.img`
 `
 
 function App() {
-  const [items, setItems] = useState([
-    { name: '상품 1', quantity: 3 },
-    { name: '상품 2', quantity: 2 },
-    { name: '상품 3', quantity: 4 },
-  ])
+  // 로컬스토리지에서 상품 목록 불러오기
+  const loadItemsFromStorage = () => {
+    try {
+      const storedItems = localStorage.getItem('roulette-items')
+      if (storedItems) {
+        return JSON.parse(storedItems)
+      }
+    } catch (error) {
+      console.error('로컬스토리지에서 데이터를 불러오는 중 오류 발생:', error)
+    }
+    // 기본값: 상품 5개
+    return [
+      { name: '상품 1', quantity: 3 },
+      { name: '상품 2', quantity: 2 },
+      { name: '상품 3', quantity: 4 },
+      { name: '상품 4', quantity: 2 },
+      { name: '상품 5', quantity: 3 },
+    ]
+  }
+
+  const [items, setItems] = useState(loadItemsFromStorage)
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
   const [isSpinning, setIsSpinning] = useState(false)
   const [selectedItem, setSelectedItem] = useState(null)
   const [winner, setWinner] = useState(null)
   const [isWinnerModalOpen, setIsWinnerModalOpen] = useState(false)
+
+  // items가 변경될 때마다 로컬스토리지에 저장
+  useEffect(() => {
+    try {
+      localStorage.setItem('roulette-items', JSON.stringify(items))
+    } catch (error) {
+      console.error('로컬스토리지에 데이터를 저장하는 중 오류 발생:', error)
+    }
+  }, [items])
 
   const handleSettingsSave = (newItems) => {
     setItems(newItems)

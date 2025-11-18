@@ -34,7 +34,7 @@ const Wheel = styled.div`
   position: relative;
   overflow: hidden;
   box-shadow: 0 0 3vw rgba(0, 0, 0, 0.3);
-  border: max(0.8vw, 8px) solid #fff;
+  border: max(0.2vw, 4px) solid #fff;
   transition: transform ${props => props.duration}s cubic-bezier(0.25, 0.46, 0.45, 0.94);
   transform: rotate(${props => props.rotation}deg);
 `
@@ -98,6 +98,34 @@ function Roulette({ items, onSpin, isSpinning, selectedItem }) {
   const [currentRotation, setCurrentRotation] = useState(0)
   const [targetRotation, setTargetRotation] = useState(0)
   const [isAnimating, setIsAnimating] = useState(false)
+  
+  // 회전 후 최종 위치에서 포인터가 가리키는 아이템을 계산하는 함수
+  const getItemAtPointer = (rotation, itemAngles) => {
+    // 포인터는 위쪽(12시, SVG 기준 0도)에 있음
+    // 룰렛이 시계 방향으로 rotation만큼 회전하면
+    // 룰렛의 원래 0도 위치가 rotation만큼 회전한 위치로 이동
+    // 포인터는 고정되어 있으므로, 포인터가 가리키는 룰렛의 각도는 -rotation
+    // SVG 기준: 포인터가 가리키는 각도 = -rotation (mod 360)
+    let pointerAngle = (-rotation) % 360
+    if (pointerAngle < 0) pointerAngle += 360
+    
+    // conic-gradient 기준으로 변환: SVG 기준 0도(위쪽) = conic-gradient 기준 270도(위쪽)
+    // SVG 기준 각도에서 90도를 더하면 conic-gradient 기준 각도
+    let conicPointerAngle = (pointerAngle + 90) % 360
+    if (conicPointerAngle < 0) conicPointerAngle += 360
+    
+    // 해당 각도에 있는 아이템 찾기
+    for (const { item, startAngle, endAngle } of itemAngles) {
+      // 각도 범위 체크
+      let normalizedAngle = conicPointerAngle
+      if (normalizedAngle < startAngle) normalizedAngle += 360
+      
+      if (normalizedAngle >= startAngle && normalizedAngle < endAngle) {
+        return item
+      }
+    }
+    return null
+  }
 
   // 수량이 0보다 큰 상품만 필터링
   const availableItems = items.filter(item => item.quantity > 0)
@@ -128,14 +156,59 @@ function Roulette({ items, onSpin, isSpinning, selectedItem }) {
       // 선택된 아이템의 중간 각도 찾기
       const selectedAngleInfo = itemAngles.find(({ item }) => item.name === selectedItem.name)
       if (selectedAngleInfo) {
-        // 선택된 아이템의 중간 각도 (conic-gradient 기준: 0도는 오른쪽)
+        // 선택된 아이템의 중간 각도 (conic-gradient 기준: 0도는 오른쪽, 3시)
         const itemCenterAngle = (selectedAngleInfo.startAngle + selectedAngleInfo.endAngle) / 2
-        // 포인터는 상단(-90도 또는 270도)에 있으므로
-        // 선택된 아이템이 포인터에 오려면: 270 - itemCenterAngle
-        const targetAngle = 270 - itemCenterAngle
+        
+        // SVG path는 startAngle - 90을 사용하므로, SVG 기준으로는 0도가 위쪽(12시)
+        // itemCenterAngle을 SVG 기준으로 변환: itemCenterAngle - 90
+        // 이 각도는 현재 룰렛이 0도 회전 상태일 때의 아이템 위치
+        let svgCenterAngle = itemCenterAngle - 90
+        // 각도를 0~360 범위로 정규화
+        while (svgCenterAngle < 0) svgCenterAngle += 360
+        while (svgCenterAngle >= 360) svgCenterAngle -= 360
+        
+        // 포인터는 위쪽(12시, SVG 기준 0도)에 있음
+        // 룰렛이 시계 방향으로 회전하면, 룰렛의 각도가 증가함
+        // 선택된 아이템이 포인터에 오려면, 최종 회전 후 아이템의 SVG 기준 각도가 0도가 되어야 함
+        // 최종 회전 후 위치: (svgCenterAngle + newTargetRotation) % 360 = 0
+        // 따라서: newTargetRotation = -svgCenterAngle (mod 360) = 360 - svgCenterAngle
+        // 하지만 현재 회전 상태(currentRotation)를 고려해야 함
+        // 현재 아이템의 실제 위치: (svgCenterAngle + currentRotation) % 360
+        // 목표: 이 위치를 0도로 이동
+        // 필요한 추가 회전: 360 - ((svgCenterAngle + currentRotation) % 360)
+        
+        let currentItemPosition = (svgCenterAngle + currentRotation) % 360
+        if (currentItemPosition < 0) currentItemPosition += 360
+        
+        // 포인터 위치(0도)로 이동하기 위한 회전 각도
+        let targetAngle = 360 - currentItemPosition
+        if (targetAngle >= 360) targetAngle -= 360
+        
         // 시계방향으로 여러 바퀴 회전 (5-10바퀴)
         const fullRotations = 5 + Math.random() * 5
+        
+        // 최종 회전 각도 계산
         const newTargetRotation = currentRotation + targetAngle + (fullRotations * 360)
+        
+        // 검증: 회전 후 실제로 선택된 아이템이 포인터에 있는지 확인
+        const finalItemAngles = itemAngles.map(({ item, startAngle, endAngle }) => ({
+          item,
+          startAngle,
+          endAngle
+        }))
+        const itemAtPointer = getItemAtPointer(newTargetRotation, finalItemAngles)
+        
+        // 디버깅: 실제로 선택된 아이템이 포인터에 있는지 확인
+        if (itemAtPointer && itemAtPointer.name !== selectedItem.name) {
+          console.warn('회전 각도 계산 오류:', {
+            selectedItem: selectedItem.name,
+            itemAtPointer: itemAtPointer.name,
+            svgCenterAngle,
+            currentRotation,
+            targetAngle,
+            newTargetRotation
+          })
+        }
         
         setTargetRotation(newTargetRotation)
         setIsAnimating(true)
@@ -263,12 +336,43 @@ function Roulette({ items, onSpin, isSpinning, selectedItem }) {
             const gradientId = `gradient-${index}`
             const path = createSectorPath(startAngle, endAngle)
             
+            // 텍스트 위치 계산 (원의 중심에서 약 30% 떨어진 곳)
+            const sectorAngle = endAngle - startAngle
+            const centerAngle = startAngle + sectorAngle / 2
+            const centerRad = (centerAngle - 90) * Math.PI / 180
+            const textRadius = 30 // 원의 중심에서 30% 떨어진 위치
+            const textX = 50 + textRadius * Math.cos(centerRad)
+            const textY = 50 + textRadius * Math.sin(centerRad)
+            
+            // 텍스트 회전 각도: 텍스트가 원의 중심을 향하도록
+            // centerRad는 텍스트 위치의 각도 (0도가 위쪽)
+            // 텍스트가 원의 중심을 향하려면 centerRad + 180도로 회전
+            const textRotation = (centerRad * 180 / Math.PI) + 180
+            
             return (
-              <path
-                key={index}
-                d={path}
-                fill={`url(#${gradientId})`}
-              />
+              <g key={index}>
+                <path
+                  d={path}
+                  fill={`url(#${gradientId})`}
+                />
+                <text
+                  x={textX}
+                  y={textY}
+                  fill="white"
+                  fontSize="4"
+                  fontWeight="bold"
+                  textAnchor="middle"
+                  dominantBaseline="middle"
+                  transform={`rotate(${textRotation}, ${textX}, ${textY})`}
+                  style={{
+                    textShadow: '0 0 2px rgba(0, 0, 0, 0.5)',
+                    pointerEvents: 'none',
+                    userSelect: 'none'
+                  }}
+                >
+                  {item.name}
+                </text>
+              </g>
             )
           })}
         </svg>
