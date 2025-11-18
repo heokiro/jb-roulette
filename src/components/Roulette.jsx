@@ -35,9 +35,6 @@ const Wheel = styled.div`
   overflow: hidden;
   box-shadow: 0 0 3vw rgba(0, 0, 0, 0.3);
   border: max(0.8vw, 8px) solid #fff;
-  background: conic-gradient(
-    ${props => props.gradientColors}
-  );
   transition: transform ${props => props.duration}s cubic-bezier(0.25, 0.46, 0.45, 0.94);
   transform: rotate(${props => props.rotation}deg);
 `
@@ -93,11 +90,9 @@ const Pointer = styled.img`
   pointer-events: none;
 `
 
-const colors = [
-  '#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A',
-  '#98D8C8', '#F7DC6F', '#BB8FCE', '#85C1E2',
-  '#F8B739', '#6C5CE7', '#A29BFE', '#FD79A8'
-]
+// 두 가지 그라데이션 패턴
+const gradient1 = 'linear-gradient(135deg, #4037D3 0%, #FB6211 100%)'
+const gradient2 = 'linear-gradient(135deg, #FB6213 0%, #E22E59 100%)'
 
 function Roulette({ items, onSpin, isSpinning, selectedItem }) {
   const [currentRotation, setCurrentRotation] = useState(0)
@@ -119,12 +114,14 @@ function Roulette({ items, onSpin, isSpinning, selectedItem }) {
         const endAngle = currentAngle + angle
         currentAngle = endAngle
         
-        const color = colors[index % colors.length]
+        // 2가지 그라데이션 패턴 반복
+        const gradient = index % 2 === 0 ? gradient1 : gradient2
+        
         return {
           item,
           startAngle,
           endAngle,
-          color
+          gradient
         }
       })
 
@@ -195,29 +192,87 @@ function Roulette({ items, onSpin, isSpinning, selectedItem }) {
     const endAngle = currentAngle + angle
     currentAngle = endAngle
     
-    const color = colors[index % colors.length]
+    // 2가지 그라데이션 패턴 반복
+    const gradient = index % 2 === 0 ? gradient1 : gradient2
+    
     return {
       item,
       startAngle,
       endAngle,
-      color
+      gradient
     }
   })
-  
-  const gradientColors = itemAngles.map(({ color, startAngle, endAngle }) => 
-    `${color} ${startAngle}deg ${endAngle}deg`
-  ).join(', ')
 
   // 회전 각도 결정
   const rotation = isAnimating ? targetRotation : currentRotation
 
+  // SVG path 계산 함수
+  const createSectorPath = (startAngle, endAngle) => {
+    const startRad = (startAngle - 90) * Math.PI / 180
+    const endRad = (endAngle - 90) * Math.PI / 180
+    const radius = 50
+    
+    const x1 = 50 + radius * Math.cos(startRad)
+    const y1 = 50 + radius * Math.sin(startRad)
+    const x2 = 50 + radius * Math.cos(endRad)
+    const y2 = 50 + radius * Math.sin(endRad)
+    
+    const largeArc = (endAngle - startAngle) > 180 ? 1 : 0
+    
+    return `M 50 50 L ${x1} ${y1} A ${radius} ${radius} 0 ${largeArc} 1 ${x2} ${y2} Z`
+  }
+
   return (
     <RouletteContainer>
       <Wheel 
-        gradientColors={gradientColors}
         rotation={rotation}
         duration={isAnimating ? 4 : 0}
-      />
+      >
+        <svg width="100%" height="100%" viewBox="0 0 100 100" style={{ position: 'absolute', top: 0, left: 0 }}>
+          <defs>
+            {itemAngles.map(({ gradient }, index) => {
+              const gradientId = `gradient-${index}`
+              const isGradient1 = index % 2 === 0
+              const startColor = isGradient1 ? '#4037D3' : '#FB6213'
+              const endColor = isGradient1 ? '#FB6211' : '#E22E59'
+              
+              // 각 구역의 중앙 각도 계산
+              const sectorAngle = itemAngles[index].endAngle - itemAngles[index].startAngle
+              const centerAngle = itemAngles[index].startAngle + sectorAngle / 2
+              const centerRad = (centerAngle - 90) * Math.PI / 180
+              
+              // 그라데이션 방향 계산 (135도 방향)
+              const gradientAngle = centerAngle - 45
+              const gradientRad = gradientAngle * Math.PI / 180
+              
+              // 그라데이션의 시작점과 끝점 계산
+              const x1 = 50 + 50 * Math.cos(gradientRad)
+              const y1 = 50 + 50 * Math.sin(gradientRad)
+              const x2 = 50 - 50 * Math.cos(gradientRad)
+              const y2 = 50 - 50 * Math.sin(gradientRad)
+              
+              return (
+                <linearGradient key={gradientId} id={gradientId} x1={`${x1}%`} y1={`${y1}%`} x2={`${x2}%`} y2={`${y2}%`}>
+                  <stop offset="0%" stopColor={startColor} />
+                  <stop offset="100%" stopColor={endColor} />
+                </linearGradient>
+              )
+            })}
+          </defs>
+          {itemAngles.map(({ item, startAngle, endAngle }, index) => {
+            const gradientId = `gradient-${index}`
+            const path = createSectorPath(startAngle, endAngle)
+            
+            return (
+              <path
+                key={index}
+                d={path}
+                fill={`url(#${gradientId})`}
+              />
+            )
+          })}
+        </svg>
+      </Wheel>
       <CenterButton 
         onClick={onSpin}
         disabled={isSpinning || isAnimating}
