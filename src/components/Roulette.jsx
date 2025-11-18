@@ -106,8 +106,10 @@ function Roulette({ items, onSpin, isSpinning, selectedItem, onSpinComplete }) {
     let normalizedRotation = rotation % 360
     if (normalizedRotation < 0) normalizedRotation += 360
     
-    // 포인터는 12시(270도)에 고정
-    const pointerAngle = 360
+    // 포인터는 12시에 고정
+    // SVG path에서 (startAngle - 90)을 사용하므로, conic-gradient 0도가 12시에 렌더링됨
+    // 따라서 포인터는 conic-gradient 기준 0도 (360도는 0도와 같음)
+    const pointerAngle = 0
     
     // 각 아이템의 회전 후 실제 위치 계산
     for (const { item, startAngle, endAngle } of itemAngles) {
@@ -119,7 +121,7 @@ function Roulette({ items, onSpin, isSpinning, selectedItem, onSpinComplete }) {
       let rotatedEnd = (endAngle + normalizedRotation) % 360
       if (rotatedEnd < 0) rotatedEnd += 360
       
-      // 포인터(270도)가 이 아이템의 회전 후 범위에 있는지 확인
+      // 포인터(0도 = 12시)가 이 아이템의 회전 후 범위에 있는지 확인
       if (rotatedStart < rotatedEnd) {
         // 일반적인 경우: 회전 후에도 start < end
         if (pointerAngle >= rotatedStart && pointerAngle < rotatedEnd) {
@@ -169,25 +171,25 @@ function Roulette({ items, onSpin, isSpinning, selectedItem, onSpinComplete }) {
         const itemCenterAngle = (selectedAngleInfo.startAngle + selectedAngleInfo.endAngle) / 2
         
         // 가장 간단한 계산:
-        // 포인터는 270도(12시)에 고정
-        // 목표: (itemCenterAngle + finalRotation) % 360 = 270
-        // finalRotation = (270 - itemCenterAngle) % 360 + n * 360
+        // 포인터는 0도(12시)에 고정 (conic-gradient 기준)
+        // 목표: (itemCenterAngle + finalRotation) % 360 = 0
+        // finalRotation = (0 - itemCenterAngle) % 360 + n * 360 = (360 - itemCenterAngle) % 360 + n * 360
         
         // 현재 회전을 고려한 현재 아이템 위치
         let currentItemPosition = itemCenterAngle + currentRotation
         while (currentItemPosition < 0) currentItemPosition += 360
         while (currentItemPosition >= 360) currentItemPosition -= 360
         
-        // 270도까지 가는 각도 계산
-        let angleTo270 = 270 - currentItemPosition
-        if (angleTo270 < 0) angleTo270 += 360
-        if (angleTo270 === 0) angleTo270 = 360 // 이미 270도에 있으면 한 바퀴 더
+        // 0도(12시)까지 가는 각도 계산
+        let angleTo0 = 0 - currentItemPosition
+        if (angleTo0 < 0) angleTo0 += 360
+        if (angleTo0 === 0) angleTo0 = 360 // 이미 0도에 있으면 한 바퀴 더
         
         // 여러 바퀴 회전 (5-10바퀴)
         const extraRotations = (5 + Math.random() * 5) * 360
         
         // 최종 회전 각도
-        const finalRotation = currentRotation + angleTo270 + extraRotations
+        const finalRotation = currentRotation + angleTo0 + extraRotations
         
         // 검증: 회전 후 실제로 선택된 아이템이 포인터에 있는지 확인
         const finalItemAngles = itemAngles.map(({ item, startAngle, endAngle }) => ({
@@ -255,10 +257,12 @@ function Roulette({ items, onSpin, isSpinning, selectedItem, onSpinComplete }) {
             if (rotatedEnd < 0) rotatedEnd += 360
             
             let inRange = false
+            const pointerAngle = 0 // 12시는 conic-gradient 기준 0도
             if (rotatedStart < rotatedEnd) {
-              inRange = 270 >= rotatedStart && 270 < rotatedEnd
+              inRange = pointerAngle >= rotatedStart && pointerAngle < rotatedEnd
             } else {
-              inRange = 270 >= rotatedStart || 270 < rotatedEnd
+              // 360도 경계를 넘어가는 경우 (예: 350도 ~ 10도)
+              inRange = pointerAngle >= rotatedStart || pointerAngle < rotatedEnd
             }
             
             return {
