@@ -176,9 +176,8 @@ function App() {
         )
       )
       
-      // selectedItem 초기화
-      setSelectedItem(null)
-    }, 3500) // 3.5초 회전 애니메이션
+      // selectedItem은 유지하여 룰렛이 그대로 멈춰있도록 함
+    }, 4000) // 4초 회전 애니메이션
   }
 
   const handleWinnerModalClose = () => {

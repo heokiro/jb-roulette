@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react'
 import styled, { keyframes } from 'styled-components'
 
 const spin = keyframes`
@@ -37,8 +38,8 @@ const Wheel = styled.div`
   background: conic-gradient(
     ${props => props.gradientColors}
   );
-  transition: transform 3.5s cubic-bezier(0.17, 0.67, 0.12, 0.99);
-  transform: ${props => props.isSpinning ? `rotate(${props.rotation}deg)` : 'rotate(0deg)'};
+  transition: transform ${props => props.duration}s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  transform: rotate(${props => props.rotation}deg);
 `
 
 const CenterButton = styled.button`
@@ -51,15 +52,15 @@ const CenterButton = styled.button`
   min-width: 80px;
   min-height: 80px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #ff6b6b, #ee5a6f);
-  border: max(0.6vw, 6px) solid #fff;
+  background-image: url('/images/button.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  border: none;
   cursor: ${props => props.disabled ? 'not-allowed' : 'pointer'};
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: clamp(16px, 2.5vw, 28px);
-  font-weight: bold;
-  color: white;
   box-shadow: 0 0.4vw 2vw rgba(0, 0, 0, 0.3);
   z-index: 5;
   transition: all 0.3s ease;
@@ -99,13 +100,72 @@ const colors = [
 ]
 
 function Roulette({ items, onSpin, isSpinning, selectedItem }) {
+  const [currentRotation, setCurrentRotation] = useState(0)
+  const [targetRotation, setTargetRotation] = useState(0)
+  const [isAnimating, setIsAnimating] = useState(false)
+
   // 수량이 0보다 큰 상품만 필터링
   const availableItems = items.filter(item => item.quantity > 0)
+  
+  useEffect(() => {
+    if (isSpinning && selectedItem && availableItems.length > 0) {
+      // 각 상품의 각도 계산
+      const totalQuantity = availableItems.reduce((sum, item) => sum + item.quantity, 0)
+      let currentAngle = 0
+      
+      const itemAngles = availableItems.map((item, index) => {
+        const angle = (item.quantity / totalQuantity) * 360
+        const startAngle = currentAngle
+        const endAngle = currentAngle + angle
+        currentAngle = endAngle
+        
+        const color = colors[index % colors.length]
+        return {
+          item,
+          startAngle,
+          endAngle,
+          color
+        }
+      })
+
+      // 선택된 아이템의 중간 각도 찾기
+      const selectedAngleInfo = itemAngles.find(({ item }) => item.name === selectedItem.name)
+      if (selectedAngleInfo) {
+        // 선택된 아이템의 중간 각도 (conic-gradient 기준: 0도는 오른쪽)
+        const itemCenterAngle = (selectedAngleInfo.startAngle + selectedAngleInfo.endAngle) / 2
+        // 포인터는 상단(-90도 또는 270도)에 있으므로
+        // 선택된 아이템이 포인터에 오려면: 270 - itemCenterAngle
+        const targetAngle = 270 - itemCenterAngle
+        // 시계방향으로 여러 바퀴 회전 (5-10바퀴)
+        const fullRotations = 5 + Math.random() * 5
+        const newTargetRotation = currentRotation + targetAngle + (fullRotations * 360)
+        
+        setTargetRotation(newTargetRotation)
+        setIsAnimating(true)
+      }
+    }
+  }, [isSpinning, selectedItem])
+
+  useEffect(() => {
+    if (isAnimating) {
+      // 애니메이션이 끝나면 현재 회전값을 업데이트하고 멈춤
+      const timer = setTimeout(() => {
+        setCurrentRotation(targetRotation)
+        setIsAnimating(false)
+      }, 4000) // 4초 애니메이션
+      
+      return () => clearTimeout(timer)
+    }
+  }, [isAnimating, targetRotation])
   
   if (availableItems.length === 0) {
     return (
       <RouletteContainer>
-        <Wheel>
+        <Wheel
+          gradientColors=""
+          rotation={currentRotation}
+          duration={0}
+        >
           <div style={{
             position: 'absolute',
             top: '50%',
@@ -118,7 +178,7 @@ function Roulette({ items, onSpin, isSpinning, selectedItem }) {
             상품을 추가해주세요
           </div>
         </Wheel>
-        <CenterButton disabled>START</CenterButton>
+        <CenterButton disabled />
         <Pointer src="/images/Polygon.png" alt="포인터" />
       </RouletteContainer>
     )
@@ -148,37 +208,20 @@ function Roulette({ items, onSpin, isSpinning, selectedItem }) {
     `${color} ${startAngle}deg ${endAngle}deg`
   ).join(', ')
 
-  // 회전 각도 계산
-  let rotation = 0
-  if (isSpinning && selectedItem) {
-    // 선택된 아이템의 중간 각도 찾기
-    const selectedAngleInfo = itemAngles.find(({ item }) => item.name === selectedItem.name)
-    if (selectedAngleInfo) {
-      // 선택된 아이템의 중간 각도 (conic-gradient 기준: 0도는 오른쪽)
-      const itemCenterAngle = (selectedAngleInfo.startAngle + selectedAngleInfo.endAngle) / 2
-      // 포인터는 상단(-90도 또는 270도)에 있으므로
-      // 선택된 아이템이 포인터에 오려면: -90 - itemCenterAngle
-      // 양수로 변환: 270 - itemCenterAngle
-      const targetAngle = 270 - itemCenterAngle
-      // 여러 바퀴 회전 (5-10바퀴) - 음수 방향으로도 회전 가능하게
-      const fullRotations = 5 + Math.random() * 5
-      rotation = targetAngle + (fullRotations * 360)
-    }
-  }
+  // 회전 각도 결정
+  const rotation = isAnimating ? targetRotation : currentRotation
 
   return (
     <RouletteContainer>
       <Wheel 
         gradientColors={gradientColors}
-        isSpinning={isSpinning}
         rotation={rotation}
+        duration={isAnimating ? 4 : 0}
       />
       <CenterButton 
         onClick={onSpin}
-        disabled={isSpinning}
-      >
-        {isSpinning ? '...' : 'START'}
-      </CenterButton>
+        disabled={isSpinning || isAnimating}
+      />
       <Pointer src="/images/Polygon.png" alt="포인터" />
     </RouletteContainer>
   )
