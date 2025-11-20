@@ -33,7 +33,7 @@ const AppContainer = styled.div`
 
 const TitleContainer = styled.div`
   position: absolute;
-  top: 4vh;
+  top: 2dvh;
   left: 50%;
   transform: translateX(-50%);
   z-index: 10;
@@ -105,9 +105,14 @@ const RouletteContainer = styled.div`
   width: 100%;
   max-width: 100vw;
   
-  @media (max-width: 768px) {
+  @media (max-width: 768px) and (orientation: portrait) {
     margin-top: 1vh;
     gap: 2vh;
+  }
+  
+  @media (max-width: 768px) and (orientation: landscape) {
+    margin-top: 10vh;
+    gap: 1.5vh;
   }
 `
 
