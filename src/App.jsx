@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import styled from 'styled-components'
 import Roulette from './components/Roulette'
 import SettingsModal from './components/SettingsModal'
@@ -17,8 +17,9 @@ const AppContainer = styled.div`
   background-position: center;
   background-repeat: no-repeat;
   position: relative;
-  overflow-x: visible;
+  overflow-x: hidden;
   overflow-y: auto;
+  touch-action: pan-y;
   
   /* 아이패드 해상도 기준 */
   @media (min-width: 768px) and (max-width: 1024px) {
@@ -53,12 +54,12 @@ const TitleImage = styled.img`
 
 const SettingsButton = styled.button`
   position: absolute;
-  bottom: 4vh;
-  right: 4vw;
-  width: 6vw;
-  height: 6vw;
-  min-width: 50px;
-  min-height: 50px;
+  bottom: 4dvh;
+  right: 4dvw;
+  width: 6dvw;
+  height: 6dvw;
+  min-width: 40px;
+  min-height: 40px;
   max-width: 80px;
   max-height: 80px;
   background: transparent;
@@ -87,7 +88,7 @@ const SettingsButton = styled.button`
 `
 
 const RouletteContainer = styled.div`
-  margin-top: 10vh;
+  margin-top: 5vh;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -98,7 +99,7 @@ const RouletteContainer = styled.div`
   max-width: 100vw;
   
   @media (max-width: 768px) {
-    margin-top: 10vh;
+    margin-top: 1vh;
     gap: 2vh;
   }
 `
@@ -143,6 +144,7 @@ function App() {
   const [selectedItem, setSelectedItem] = useState(null)
   const [winner, setWinner] = useState(null)
   const [isWinnerModalOpen, setIsWinnerModalOpen] = useState(false)
+  const appContainerRef = useRef(null)
 
   // items가 변경될 때마다 로컬스토리지에 저장
   useEffect(() => {
@@ -152,6 +154,42 @@ function App() {
       console.error('로컬스토리지에 데이터를 저장하는 중 오류 발생:', error)
     }
   }, [items])
+
+  // 가로 스크롤 방지 (터치 이벤트 처리)
+  useEffect(() => {
+    const container = appContainerRef.current
+    if (!container) return
+
+    let touchStartX = 0
+    let touchStartY = 0
+
+    const handleTouchStart = (e) => {
+      touchStartX = e.touches[0].clientX
+      touchStartY = e.touches[0].clientY
+    }
+
+    const handleTouchMove = (e) => {
+      if (e.touches.length !== 1) return
+
+      const touchCurrentX = e.touches[0].clientX
+      const touchCurrentY = e.touches[0].clientY
+      const deltaX = Math.abs(touchCurrentX - touchStartX)
+      const deltaY = Math.abs(touchCurrentY - touchStartY)
+
+      // 가로 이동이 세로 이동보다 크면 가로 스크롤 방지
+      if (deltaX > deltaY && deltaX > 10) {
+        e.preventDefault()
+      }
+    }
+
+    container.addEventListener('touchstart', handleTouchStart, { passive: false })
+    container.addEventListener('touchmove', handleTouchMove, { passive: false })
+
+    return () => {
+      container.removeEventListener('touchstart', handleTouchStart)
+      container.removeEventListener('touchmove', handleTouchMove)
+    }
+  }, [])
 
   const handleSettingsSave = (newItems) => {
     setItems(newItems)
@@ -208,7 +246,7 @@ function App() {
   }
 
   return (
-    <AppContainer>
+    <AppContainer ref={appContainerRef}>
       <TitleContainer>
         <TitleImage src="/images/title_img.png" alt="룰렛 게임" />
       </TitleContainer>

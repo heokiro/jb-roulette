@@ -18,6 +18,11 @@ const RouletteContainer = styled.div`
   min-height: 300px;
   max-width: min(60vh, 80vh);
   max-height: min(60vh, 80vh);
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
   
   @media (max-width: 768px) {
     width: 80vw;
@@ -62,7 +67,7 @@ const CenterButton = styled.button`
   box-shadow: 0 0.4vw 2vw rgba(0, 0, 0, 0.3);
   z-index: 5;
   transition: all 0.3s ease;
-  touch-action: manipulation;
+  touch-action: none;
   -webkit-tap-highlight-color: transparent;
   
   &:hover:not(:disabled) {
@@ -88,11 +93,11 @@ const CenterButtonImage = styled.img`
 
 const Pointer = styled.img`
   position: absolute;
-  top: -4vw;
+  top: -3vh;
   left: 50%;
   transform: translateX(-50%);
   width: auto;
-  height: max(8vh, 70px);
+  height: max(8vh, 50px);
   z-index: 10;
   filter: drop-shadow(0 0.2vw 0.4vw rgba(0, 0, 0, 0.3));
   pointer-events: none;
