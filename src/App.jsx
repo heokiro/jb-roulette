@@ -64,13 +64,14 @@ const SettingsButton = styled.button`
   max-height: 80px;
   background: transparent;
   border: none;
-  cursor: pointer;
+  cursor: ${props => props.disabled ? 'not-allowed' : 'pointer'};
   display: flex;
   align-items: center;
   justify-content: center;
   transition: all 0.3s ease;
   z-index: 1000;
   padding: 0;
+  opacity: ${props => props.disabled ? 0.5 : 1};
   
   @media (max-width: 768px) {
     bottom: 2dvh;
@@ -79,12 +80,16 @@ const SettingsButton = styled.button`
     min-height: 40px;
   }
   
-  &:hover {
+  &:hover:not(:disabled) {
     transform: scale(1.1);
   }
   
-  &:active {
+  &:active:not(:disabled) {
     transform: scale(0.95);
+  }
+  
+  &:disabled {
+    pointer-events: none;
   }
   
   img {
@@ -263,7 +268,10 @@ function App() {
         <TitleImage src="/images/title_img.png" alt="룰렛 게임" />
       </TitleContainer>
       
-      <SettingsButton onClick={() => setIsSettingsOpen(true)}>
+      <SettingsButton 
+        onClick={() => setIsSettingsOpen(true)}
+        disabled={isSpinning}
+      >
         <img src="/images/settings.png" alt="설정" />
       </SettingsButton>
 
