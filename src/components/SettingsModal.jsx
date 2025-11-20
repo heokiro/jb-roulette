@@ -92,15 +92,31 @@ const ItemRow = styled.div`
   display: flex;
   gap: 1vw;
   align-items: center;
+  min-width: 0;
+  
+  @media (max-width: 768px) {
+    gap: 2vw;
+  }
+  
+  @media (max-width: 480px) {
+    gap: 3vw;
+  }
 `
 
 const Input = styled.input`
-  flex: 1;
+  flex: 1 1 0;
+  min-width: 0;
   padding: 1.2vh 1.2vw;
   border: 0.2vw solid #e0e0e0;
   border-radius: 0.8vw;
-  font-size: clamp(14px, 1.8vw, 18px);
+  font-size: clamp(16px, 1.8vw, 18px);
   transition: border-color 0.3s ease;
+  -webkit-appearance: none;
+  
+  @media (max-width: 480px) {
+    padding: 1.2vh 2vw;
+    min-width: 80px;
+  }
   
   &:focus {
     outline: none;
@@ -109,10 +125,16 @@ const Input = styled.input`
 `
 
 const QuantityInput = styled(Input)`
+  flex: 0 0 auto;
   width: 10vw;
-  flex: 0 0 10vw;
-  min-width: 80px;
-  max-width: 120px;
+  min-width: 70px;
+  max-width: 100px;
+  font-size: clamp(16px, 1.8vw, 18px);
+  
+  @media (max-width: 480px) {
+    min-width: 60px;
+    max-width: 80px;
+  }
 `
 
 const DeleteButton = styled.button`
@@ -124,6 +146,13 @@ const DeleteButton = styled.button`
   cursor: pointer;
   font-size: clamp(14px, 1.8vw, 18px);
   transition: background 0.3s ease;
+  flex-shrink: 0;
+  white-space: nowrap;
+  
+  @media (max-width: 480px) {
+    padding: 1.2vh 3vw;
+    font-size: clamp(13px, 3.5vw, 16px);
+  }
   
   &:hover {
     background: #ee5a6f;
@@ -176,6 +205,30 @@ function SettingsModal({ items, onSave, onClose }) {
   useEffect(() => {
     setLocalItems([...items])
   }, [items])
+
+  // 모달이 열릴 때 body 스크롤 방지 및 복원
+  useEffect(() => {
+    // 모달이 열릴 때 body의 현재 스크롤 위치 저장
+    const scrollY = window.scrollY
+    const body = document.body
+    const html = document.documentElement
+
+    // body 스크롤 방지
+    body.style.position = 'fixed'
+    body.style.top = `-${scrollY}px`
+    body.style.width = '100%'
+    body.style.overflow = 'hidden'
+
+    // cleanup: 모달이 닫힐 때 스크롤 복원
+    return () => {
+      body.style.position = ''
+      body.style.top = ''
+      body.style.width = ''
+      body.style.overflow = ''
+      // 저장된 스크롤 위치로 복원
+      window.scrollTo(0, scrollY)
+    }
+  }, [])
 
   const handleItemChange = (index, field, value) => {
     const newItems = [...localItems]

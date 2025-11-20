@@ -53,13 +53,13 @@ const TitleImage = styled.img`
 `
 
 const SettingsButton = styled.button`
-  position: absolute;
-  bottom: 4dvh;
-  right: 4dvw;
+  position: fixed;
+  bottom: 2dvh;
+  right: 2dvw;
   width: 6dvw;
   height: 6dvw;
-  min-width: 40px;
-  min-height: 40px;
+  min-width: 50px;
+  min-height: 50px;
   max-width: 80px;
   max-height: 80px;
   background: transparent;
@@ -69,8 +69,15 @@ const SettingsButton = styled.button`
   align-items: center;
   justify-content: center;
   transition: all 0.3s ease;
-  z-index: 10;
+  z-index: 1000;
   padding: 0;
+  
+  @media (max-width: 768px) {
+    bottom: 2dvh;
+    right: 2dvw;
+    min-width: 40px;
+    min-height: 40px;
+  }
   
   &:hover {
     transform: scale(1.1);

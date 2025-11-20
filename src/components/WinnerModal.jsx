@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import styled, { keyframes } from 'styled-components'
 
 const fadeInOverlay = keyframes`
@@ -76,6 +77,30 @@ const WinnerName = styled.div`
 `
 
 function WinnerModal({ winner, onClose }) {
+  // 모달이 열릴 때 body 스크롤 방지 및 복원
+  useEffect(() => {
+    // 모달이 열릴 때 body의 현재 스크롤 위치 저장
+    const scrollY = window.scrollY
+    const body = document.body
+    const html = document.documentElement
+
+    // body 스크롤 방지
+    body.style.position = 'fixed'
+    body.style.top = `-${scrollY}px`
+    body.style.width = '100%'
+    body.style.overflow = 'hidden'
+
+    // cleanup: 모달이 닫힐 때 스크롤 복원
+    return () => {
+      body.style.position = ''
+      body.style.top = ''
+      body.style.width = ''
+      body.style.overflow = ''
+      // 저장된 스크롤 위치로 복원
+      window.scrollTo(0, scrollY)
+    }
+  }, [])
+
   return (
     <ModalOverlay onClick={onClose}>
       <ModalContent onClick={onClose}>
