@@ -6,8 +6,8 @@ import WinnerModal from './components/WinnerModal'
 // Title 이미지가 없을 경우를 대비한 처리
 
 const AppContainer = styled.div`
-  width: 100vw;
-  height: 100vh;
+  width: 100dvw;
+  height: 100dvh;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -106,8 +106,8 @@ const RouletteContainer = styled.div`
   max-width: 100vw;
   
   @media (max-width: 768px) and (orientation: portrait) {
-    margin-top: 1vh;
-    gap: 2vh;
+    margin-top: 5dvh;
+    gap: 2dvh;
   }
   
   @media (max-width: 768px) and (orientation: landscape) {

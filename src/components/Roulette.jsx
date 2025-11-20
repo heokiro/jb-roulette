@@ -107,6 +107,58 @@ const Pointer = styled.img`
 const gradient1 = 'linear-gradient(135deg, #4037D3 0%, #FB6211 100%)'
 const gradient2 = 'linear-gradient(135deg, #FB6213 0%, #E22E59 100%)'
 
+// 최소 각도를 보장하며 각도를 계산하는 함수
+const calculateItemAngles = (availableItems, minAngle = 15) => {
+  const totalQuantity = availableItems.reduce((sum, item) => sum + item.quantity, 0)
+  const itemCount = availableItems.length
+  
+  // 최소 각도로 인해 필요한 총 각도
+  const minTotalAngle = itemCount * minAngle
+  
+  // 나머지 각도 (360도에서 최소 각도 합을 뺀 값)
+  const remainingAngle = Math.max(0, 360 - minTotalAngle)
+  
+  // 나머지 각도를 수량에 비례하여 배분
+  const angles = availableItems.map((item, index) => {
+    // 기본 각도 = 최소 각도 + (수량에 비례한 나머지 각도)
+    const proportionalAngle = remainingAngle > 0 
+      ? (item.quantity / totalQuantity) * remainingAngle 
+      : 0
+    const angle = minAngle + proportionalAngle
+    
+    return {
+      item,
+      angle,
+      index
+    }
+  })
+  
+  // 각도 합이 정확히 360도가 되도록 조정
+  const totalCalculatedAngle = angles.reduce((sum, { angle }) => sum + angle, 0)
+  const scale = 360 / totalCalculatedAngle
+  
+  // 시작/끝 각도 계산
+  let currentAngle = 0
+  const itemAngles = angles.map(({ item, angle, index }) => {
+    const scaledAngle = angle * scale
+    const startAngle = currentAngle
+    const endAngle = currentAngle + scaledAngle
+    currentAngle = endAngle
+    
+    // 2가지 그라데이션 패턴 반복
+    const gradient = index % 2 === 0 ? gradient1 : gradient2
+    
+    return {
+      item,
+      startAngle,
+      endAngle,
+      gradient
+    }
+  })
+  
+  return itemAngles
+}
+
 function Roulette({ items, onSpin, isSpinning, selectedItem, onSpinComplete, isWinnerModalOpen }) {
   const [currentRotation, setCurrentRotation] = useState(0)
   const [targetRotation, setTargetRotation] = useState(0)
@@ -207,26 +259,8 @@ function Roulette({ items, onSpin, isSpinning, selectedItem, onSpinComplete, isW
   
   useEffect(() => {
     if (isSpinning && selectedItem && availableItems.length > 0) {
-      // 각 상품의 각도 계산
-      const totalQuantity = availableItems.reduce((sum, item) => sum + item.quantity, 0)
-      let currentAngle = 0
-      
-      const itemAngles = availableItems.map((item, index) => {
-        const angle = (item.quantity / totalQuantity) * 360
-        const startAngle = currentAngle
-        const endAngle = currentAngle + angle
-        currentAngle = endAngle
-        
-        // 2가지 그라데이션 패턴 반복
-        const gradient = index % 2 === 0 ? gradient1 : gradient2
-        
-        return {
-          item,
-          startAngle,
-          endAngle,
-          gradient
-        }
-      })
+      // 각 상품의 각도 계산 (최소 각도 보장)
+      const itemAngles = calculateItemAngles(availableItems)
 
       // 선택된 아이템의 중간 각도 찾기
       const selectedAngleInfo = itemAngles.find(({ item }) => item.name === selectedItem.name)
@@ -294,16 +328,12 @@ function Roulette({ items, onSpin, isSpinning, selectedItem, onSpinComplete, isW
         // 룰렛이 멈춘 후 실제 12시 포인터가 가리키는 경품 찾기
         const availableItems = items.filter(item => item.quantity > 0)
         if (availableItems.length > 0) {
-          const totalQuantity = availableItems.reduce((sum, item) => sum + item.quantity, 0)
-          let currentAngle = 0
-          
-          const itemAngles = availableItems.map((item) => {
-            const angle = (item.quantity / totalQuantity) * 360
-            const startAngle = currentAngle
-            const endAngle = currentAngle + angle
-            currentAngle = endAngle
-            return { item, startAngle, endAngle }
-          })
+          // 각 상품의 각도 계산 (최소 각도 보장)
+          const itemAngles = calculateItemAngles(availableItems).map(({ item, startAngle, endAngle }) => ({
+            item,
+            startAngle,
+            endAngle
+          }))
           
           // 실제 멈춘 위치에서 12시 포인터가 가리키는 경품 찾기
           const winner = getItemAtPointer(targetRotation, itemAngles)
@@ -397,27 +427,8 @@ function Roulette({ items, onSpin, isSpinning, selectedItem, onSpinComplete, isW
     )
   }
 
-  // 각 상품의 각도 계산
-  const totalQuantity = availableItems.reduce((sum, item) => sum + item.quantity, 0)
-  let currentAngle = 0
-  
-  // 각 상품의 시작/끝 각도와 색상 정보 저장
-  const itemAngles = availableItems.map((item, index) => {
-    const angle = (item.quantity / totalQuantity) * 360
-    const startAngle = currentAngle
-    const endAngle = currentAngle + angle
-    currentAngle = endAngle
-    
-    // 2가지 그라데이션 패턴 반복
-    const gradient = index % 2 === 0 ? gradient1 : gradient2
-    
-    return {
-      item,
-      startAngle,
-      endAngle,
-      gradient
-    }
-  })
+  // 각 상품의 각도 계산 (최소 각도 보장)
+  const itemAngles = calculateItemAngles(availableItems)
 
   // 회전 각도 결정
   const rotation = isAnimating ? targetRotation : currentRotation
@@ -446,51 +457,6 @@ function Roulette({ items, onSpin, isSpinning, selectedItem, onSpinComplete, isW
       >
         <svg width="100%" height="100%" viewBox="0 0 100 100" style={{ position: 'absolute', top: 0, left: 0 }}>
           <defs>
-            {/* 경계선 그림자 효과 필터 */}
-            <filter id="borderShadow" x="-50%" y="-50%" width="200%" height="200%">
-              <feGaussianBlur in="SourceAlpha" stdDeviation="1.2"/>
-              <feOffset dx="0.8" dy="0.8" result="offsetblur"/>
-              <feComponentTransfer>
-                <feFuncA type="linear" slope="0.4"/>
-              </feComponentTransfer>
-              <feMerge>
-                <feMergeNode in="offsetblur"/>
-              </feMerge>
-            </filter>
-            {/* 경계선 반대 방향 그림자 효과 필터 (첫 번째 상품의 시작 경계선용) */}
-            <filter id="borderShadowReverse" x="-50%" y="-50%" width="200%" height="200%">
-              <feGaussianBlur in="SourceAlpha" stdDeviation="1.2"/>
-              <feOffset dx="-0.8" dy="-0.8" result="offsetblur"/>
-              <feComponentTransfer>
-                <feFuncA type="linear" slope="0.4"/>
-              </feComponentTransfer>
-              <feMerge>
-                <feMergeNode in="offsetblur"/>
-              </feMerge>
-            </filter>
-            {/* 상품1에서 상품N 쪽으로 향하는 특별한 그림자 효과 필터 */}
-            <filter id="borderShadowToLast" x="-50%" y="-50%" width="200%" height="200%">
-              <feGaussianBlur in="SourceAlpha" stdDeviation="1.2"/>
-              <feOffset dx="-0.8" dy="0" result="offsetblur"/>
-              <feComponentTransfer>
-                <feFuncA type="linear" slope="0.4"/>
-              </feComponentTransfer>
-              <feMerge>
-                <feMergeNode in="offsetblur"/>
-              </feMerge>
-            </filter>
-            {/* 구역 입체감 그림자 효과 (한쪽에 그림자) */}
-            <filter id="sectorShadow" x="-50%" y="-50%" width="200%" height="200%">
-              <feGaussianBlur in="SourceAlpha" stdDeviation="1.5"/>
-              <feOffset dx="0.1" dy="0.1" result="offsetblur"/>
-              <feComponentTransfer>
-                <feFuncA type="linear" slope="0.3"/>
-              </feComponentTransfer>
-              <feMerge>
-                <feMergeNode in="offsetblur"/>
-                <feMergeNode in="SourceGraphic"/>
-              </feMerge>
-            </filter>
             {itemAngles.map(({ gradient }, index) => {
               const gradientId = `gradient-${index}`
               const isGradient1 = index % 2 === 0
@@ -552,35 +518,32 @@ function Roulette({ items, onSpin, isSpinning, selectedItem, onSpinComplete, isW
             
             return (
               <g key={index}>
-                {/* 구역에 입체감 그림자 효과 */}
+                {/* 구역 */}
                 <path
                   d={path}
                   fill={`url(#${gradientId})`}
-                  filter="url(#sectorShadow)"
                 />
-                {/* 구역 경계선에 그림자 효과 (원의 중심에서 가장자리까지) */}
-                {/* 첫 번째 상품의 시작 경계선은 상품N 쪽으로 향하는 특별한 그림자 적용 */}
+                {/* 구역 경계선 (깔끔한 흰색 선) */}
                 <line
                   x1="50"
                   y1="50"
                   x2={startX}
                   y2={startY}
-                  stroke="rgba(0, 0, 0, 0.1)"
-                  strokeWidth="0.1"
+                  stroke="#ffffff"
+                  strokeWidth="1"
                   strokeLinecap="round"
-                  filter={isFirstItem ? "url(#borderShadowToLast)" : "url(#borderShadow)"}
                 />
-                {/* 마지막 상품의 끝 경계선은 그림자 없음 */}
-                <line
-                  x1="49.8"
-                  y1="50"
-                  x2={endX - 0.2}
-                  y2={endY}
-                  stroke="rgba(0, 0, 0, 0.2)"
-                  strokeWidth="0.5"
-                  strokeLinecap="round"
-                  filter={isLastItem ? undefined : "url(#borderShadow)"}
-                />
+                {isLastItem && (
+                  <line
+                    x1="50"
+                    y1="50"
+                    x2={endX}
+                    y2={endY}
+                    stroke="#ffffff"
+                    strokeWidth="1"
+                    strokeLinecap="round"
+                  />
+                )}
                 <text
                   x={textX}
                   y={textY}
