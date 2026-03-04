@@ -105,7 +105,7 @@ function WinnerModal({ winner, onClose }) {
     <ModalOverlay onClick={onClose}>
       <ModalContent onClick={onClose}>
         <WinnerName>
-          <span style={{ whiteSpace: 'nowrap' }}>{winner.name} Won!</span>
+          <span style={{ whiteSpace: 'nowrap' }}>{winner.name} </span>
         </WinnerName>
       </ModalContent>
     </ModalOverlay>
