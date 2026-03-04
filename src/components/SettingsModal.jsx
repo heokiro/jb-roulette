@@ -206,26 +206,26 @@ function SettingsModal({ items, onSave, onClose }) {
     setLocalItems([...items])
   }, [items])
 
-  // 모달이 열릴 때 body 스크롤 방지 및 복원
+  // Prevent body scroll when modal opens and restore when closes
   useEffect(() => {
-    // 모달이 열릴 때 body의 현재 스크롤 위치 저장
+    // Save current scroll position when modal opens
     const scrollY = window.scrollY
     const body = document.body
     const html = document.documentElement
 
-    // body 스크롤 방지
+    // Prevent body scroll
     body.style.position = 'fixed'
     body.style.top = `-${scrollY}px`
     body.style.width = '100%'
     body.style.overflow = 'hidden'
 
-    // cleanup: 모달이 닫힐 때 스크롤 복원
+    // cleanup: restore scroll when modal closes
     return () => {
       body.style.position = ''
       body.style.top = ''
       body.style.width = ''
       body.style.overflow = ''
-      // 저장된 스크롤 위치로 복원
+      // Restore to saved scroll position
       window.scrollTo(0, scrollY)
     }
   }, [])
@@ -233,13 +233,13 @@ function SettingsModal({ items, onSave, onClose }) {
   const handleItemChange = (index, field, value) => {
     const newItems = [...localItems]
     if (field === 'quantity') {
-      // 빈 문자열이면 빈 문자열로 유지
+      // Keep as empty string if empty
       if (value === '' || value === null || value === undefined) {
         newItems[index][field] = ''
         setLocalItems(newItems)
         return
       }
-      // 앞에 0이 붙은 경우 제거 (예: "05" -> "5")
+      // Remove leading zeros (e.g., "05" -> "5")
       const trimmedValue = value.replace(/^0+/, '') || '0'
       const numValue = parseInt(trimmedValue, 10)
       if (isNaN(numValue)) {
@@ -263,21 +263,21 @@ function SettingsModal({ items, onSave, onClose }) {
   }
 
   const handleSave = () => {
-    // 빈 상품명과 수량이 0이거나 빈 문자열인 항목 제거
+    // Remove items with empty name or quantity of 0 or empty string
     const validItems = localItems
       .map(item => ({
         ...item,
         quantity: item.quantity === '' || item.quantity === null || item.quantity === undefined ? 0 : Number(item.quantity)
       }))
       .filter(item => item.name.trim() !== '' && item.quantity > 0)
-    onSave(validItems.length > 0 ? validItems : [{ name: '상품 1', quantity: 1 }])
+    onSave(validItems.length > 0 ? validItems : [{ name: 'Item 1', quantity: 1 }])
   }
 
   return (
     <ModalOverlay onClick={onClose}>
       <ModalContent onClick={(e) => e.stopPropagation()}>
         <ModalHeader>
-          <h2>룰렛 설정</h2>
+          <h2>Roulette Settings</h2>
           <CloseButton onClick={onClose}>×</CloseButton>
         </ModalHeader>
         
@@ -286,26 +286,26 @@ function SettingsModal({ items, onSave, onClose }) {
             <ItemRow key={index}>
               <Input
                 type="text"
-                placeholder="상품명"
+                placeholder="Item Name"
                 value={item.name}
                 onChange={(e) => handleItemChange(index, 'name', e.target.value)}
               />
               <QuantityInput
                 type="number"
-                placeholder="수량"
+                placeholder="Qty"
                 min="0"
                 value={item.quantity === 0 || item.quantity === '' ? '' : item.quantity}
                 onChange={(e) => handleItemChange(index, 'quantity', e.target.value)}
               />
               <DeleteButton onClick={() => handleDelete(index)}>
-                삭제
+                Delete
               </DeleteButton>
             </ItemRow>
           ))}
         </ItemList>
 
-        <AddButton onClick={handleAdd}>+ 상품 추가</AddButton>
-        <SaveButton onClick={handleSave}>저장</SaveButton>
+        <AddButton onClick={handleAdd}>+ Add Item</AddButton>
+        <SaveButton onClick={handleSave}>Save</SaveButton>
       </ModalContent>
     </ModalOverlay>
   )

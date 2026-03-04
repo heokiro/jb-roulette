@@ -3,7 +3,7 @@ import styled from 'styled-components'
 import Roulette from './components/Roulette'
 import SettingsModal from './components/SettingsModal'
 import WinnerModal from './components/WinnerModal'
-// Title 이미지가 없을 경우를 대비한 처리
+// Fallback for missing title image
 
 const AppContainer = styled.div`
   width: 100dvw;
@@ -21,13 +21,13 @@ const AppContainer = styled.div`
   overflow-y: auto;
   touch-action: pan-y;
   
-  /* 아이패드 해상도 기준 */
+  /* iPad resolution breakpoints */
   @media (min-width: 768px) and (max-width: 1024px) {
-    /* 아이패드 세로 모드 */
+    /* iPad portrait mode */
   }
-  
+
   @media (min-width: 1024px) {
-    /* 아이패드 가로 모드 */
+    /* iPad landscape mode */
   }
 `
 
@@ -135,7 +135,7 @@ const ExplainImage = styled.img`
 `
 
 function App() {
-  // 로컬스토리지에서 상품 목록 불러오기
+  // Load items from localStorage
   const loadItemsFromStorage = () => {
     try {
       const storedItems = localStorage.getItem('roulette-items')
@@ -143,15 +143,15 @@ function App() {
         return JSON.parse(storedItems)
       }
     } catch (error) {
-      console.error('로컬스토리지에서 데이터를 불러오는 중 오류 발생:', error)
+      console.error('Error loading data from localStorage:', error)
     }
-    // 기본값: 상품 5개
+    // Default: 5 items
     return [
-      { name: '상품 1', quantity: 3 },
-      { name: '상품 2', quantity: 2 },
-      { name: '상품 3', quantity: 4 },
-      { name: '상품 4', quantity: 2 },
-      { name: '상품 5', quantity: 3 },
+      { name: 'Item 1', quantity: 3 },
+      { name: 'Item 2', quantity: 2 },
+      { name: 'Item 3', quantity: 4 },
+      { name: 'Item 4', quantity: 2 },
+      { name: 'Item 5', quantity: 3 },
     ]
   }
 
@@ -163,16 +163,16 @@ function App() {
   const [isWinnerModalOpen, setIsWinnerModalOpen] = useState(false)
   const appContainerRef = useRef(null)
 
-  // items가 변경될 때마다 로컬스토리지에 저장
+  // Save to localStorage whenever items change
   useEffect(() => {
     try {
       localStorage.setItem('roulette-items', JSON.stringify(items))
     } catch (error) {
-      console.error('로컬스토리지에 데이터를 저장하는 중 오류 발생:', error)
+      console.error('Error saving data to localStorage:', error)
     }
   }, [items])
 
-  // 가로 스크롤 방지 (터치 이벤트 처리)
+  // Prevent horizontal scroll (touch event handling)
   useEffect(() => {
     const container = appContainerRef.current
     if (!container) return
@@ -193,7 +193,7 @@ function App() {
       const deltaX = Math.abs(touchCurrentX - touchStartX)
       const deltaY = Math.abs(touchCurrentY - touchStartY)
 
-      // 가로 이동이 세로 이동보다 크면 가로 스크롤 방지
+      // Prevent horizontal scroll if horizontal movement is greater than vertical
       if (deltaX > deltaY && deltaX > 10) {
         e.preventDefault()
       }
@@ -216,14 +216,14 @@ function App() {
   const handleSpin = () => {
     if (isSpinning) return
     
-    // 수량이 0인 상품 제외
+    // Exclude items with 0 quantity
     const availableItems = items.filter(item => item.quantity > 0)
     if (availableItems.length === 0) {
-      alert('추첨할 상품이 없습니다.')
+      alert('No items available for draw.')
       return
     }
 
-    // 랜덤으로 회전만 시작 (당첨 경품은 룰렛이 멈춘 후 실제 12시 위치에서 결정)
+    // Start spin randomly (winner determined by 12 o'clock position after wheel stops)
     const totalQuantity = availableItems.reduce((sum, item) => sum + item.quantity, 0)
     let random = Math.random() * totalQuantity
     
@@ -237,7 +237,7 @@ function App() {
       }
     }
 
-    // 선택된 아이템 설정 후 회전 시작 (회전 각도 계산용)
+    // Set selected item and start spinning (for rotation angle calculation)
     setSelectedItem(newSelectedItem)
     setIsSpinning(true)
   }
@@ -247,7 +247,7 @@ function App() {
     setWinner(winnerItem)
     setIsWinnerModalOpen(true)
     
-    // 수량 감소
+    // Decrease quantity
     setItems(prevItems => 
       prevItems.map(item => 
         item.name === winnerItem.name 
@@ -265,14 +265,14 @@ function App() {
   return (
     <AppContainer ref={appContainerRef}>
       <TitleContainer>
-        <TitleImage src="/images/title_img.png" alt="룰렛 게임" />
+        <TitleImage src="/images/title_img.png" alt="Roulette Game" />
       </TitleContainer>
       
       <SettingsButton 
         onClick={() => setIsSettingsOpen(true)}
         disabled={isSpinning}
       >
-        <img src="/images/settings.png" alt="설정" />
+        <img src="/images/settings.png" alt="Settings" />
       </SettingsButton>
 
               <RouletteContainer>
@@ -284,7 +284,7 @@ function App() {
                   onSpinComplete={handleSpinComplete}
                   isWinnerModalOpen={isWinnerModalOpen}
                 />
-                <ExplainImage src="/images/explain.png" alt="설명" />
+                <ExplainImage src="/images/explain.png" alt="Description" />
               </RouletteContainer>
 
       {isSettingsOpen && (

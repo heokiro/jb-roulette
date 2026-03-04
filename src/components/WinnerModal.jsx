@@ -77,26 +77,26 @@ const WinnerName = styled.div`
 `
 
 function WinnerModal({ winner, onClose }) {
-  // 모달이 열릴 때 body 스크롤 방지 및 복원
+  // Prevent body scroll when modal opens and restore when closes
   useEffect(() => {
-    // 모달이 열릴 때 body의 현재 스크롤 위치 저장
+    // Save current scroll position when modal opens
     const scrollY = window.scrollY
     const body = document.body
     const html = document.documentElement
 
-    // body 스크롤 방지
+    // Prevent body scroll
     body.style.position = 'fixed'
     body.style.top = `-${scrollY}px`
     body.style.width = '100%'
     body.style.overflow = 'hidden'
 
-    // cleanup: 모달이 닫힐 때 스크롤 복원
+    // cleanup: restore scroll when modal closes
     return () => {
       body.style.position = ''
       body.style.top = ''
       body.style.width = ''
       body.style.overflow = ''
-      // 저장된 스크롤 위치로 복원
+      // Restore to saved scroll position
       window.scrollTo(0, scrollY)
     }
   }, [])
@@ -105,7 +105,7 @@ function WinnerModal({ winner, onClose }) {
     <ModalOverlay onClick={onClose}>
       <ModalContent onClick={onClose}>
         <WinnerName>
-          <span style={{ whiteSpace: 'nowrap' }}>{winner.name} 당첨!</span>
+          <span style={{ whiteSpace: 'nowrap' }}>{winner.name} Won!</span>
         </WinnerName>
       </ModalContent>
     </ModalOverlay>

@@ -103,51 +103,51 @@ const Pointer = styled.img`
   pointer-events: none;
 `
 
-// 두 가지 그라데이션 패턴
+// Two gradient patterns
 const gradient1 = 'linear-gradient(135deg, #4037D3 0%, #FB6211 100%)'
 const gradient2 = 'linear-gradient(135deg, #FB6213 0%, #E22E59 100%)'
 
-// 최소 각도를 보장하며 각도를 계산하는 함수
+// Function to calculate angles while ensuring minimum angle
 const calculateItemAngles = (availableItems, minAngle = 15) => {
   const totalQuantity = availableItems.reduce((sum, item) => sum + item.quantity, 0)
   const itemCount = availableItems.length
-  
-  // 최소 각도로 인해 필요한 총 각도
+
+  // Total angle needed for minimum angles
   const minTotalAngle = itemCount * minAngle
-  
-  // 나머지 각도 (360도에서 최소 각도 합을 뺀 값)
+
+  // Remaining angle (360 minus sum of minimum angles)
   const remainingAngle = Math.max(0, 360 - minTotalAngle)
-  
-  // 나머지 각도를 수량에 비례하여 배분
+
+  // Distribute remaining angle proportionally by quantity
   const angles = availableItems.map((item, index) => {
-    // 기본 각도 = 최소 각도 + (수량에 비례한 나머지 각도)
-    const proportionalAngle = remainingAngle > 0 
-      ? (item.quantity / totalQuantity) * remainingAngle 
+    // Base angle = minimum angle + (proportional remaining angle)
+    const proportionalAngle = remainingAngle > 0
+      ? (item.quantity / totalQuantity) * remainingAngle
       : 0
     const angle = minAngle + proportionalAngle
-    
+
     return {
       item,
       angle,
       index
     }
   })
-  
-  // 각도 합이 정확히 360도가 되도록 조정
+
+  // Adjust to ensure total is exactly 360 degrees
   const totalCalculatedAngle = angles.reduce((sum, { angle }) => sum + angle, 0)
   const scale = 360 / totalCalculatedAngle
-  
-  // 시작/끝 각도 계산
+
+  // Calculate start/end angles
   let currentAngle = 0
   const itemAngles = angles.map(({ item, angle, index }) => {
     const scaledAngle = angle * scale
     const startAngle = currentAngle
     const endAngle = currentAngle + scaledAngle
     currentAngle = endAngle
-    
-    // 2가지 그라데이션 패턴 반복
+
+    // Alternate between 2 gradient patterns
     const gradient = index % 2 === 0 ? gradient1 : gradient2
-    
+
     return {
       item,
       startAngle,
@@ -155,7 +155,7 @@ const calculateItemAngles = (availableItems, minAngle = 15) => {
       gradient
     }
   })
-  
+
   return itemAngles
 }
 
@@ -169,22 +169,22 @@ function Roulette({ items, onSpin, isSpinning, selectedItem, onSpinComplete, isW
   const imageIntervalRef = useRef(null)
   const wasModalOpenRef = useRef(false)
   
-  // 룰렛이 돌아가는 동안 이미지 순환
+  // Cycle images while roulette is spinning
   useEffect(() => {
     if (isAnimating) {
       const images = ['img1.png', 'img2.png', 'img3.png', 'img4.png']
       setCurrentImageIndex(0)
       setShowButtonImage(true)
       wasModalOpenRef.current = false
-      
-      // 0.2초마다 이미지 변경 (4초 애니메이션 동안 순환)
+
+      // Change image every 0.2 seconds (cycle during 4-second animation)
       imageIntervalRef.current = setInterval(() => {
         setCurrentImageIndex(prev => {
           const nextIndex = (prev + 1) % images.length
           return nextIndex
         })
       }, 200)
-      
+
       return () => {
         if (imageIntervalRef.current) {
           clearInterval(imageIntervalRef.current)
@@ -192,7 +192,7 @@ function Roulette({ items, onSpin, isSpinning, selectedItem, onSpinComplete, isW
         }
       }
     } else {
-      // 애니메이션이 끝나면 마지막 이미지(img4.png, 인덱스 3)로 고정
+      // Fix to last image (img4.png, index 3) after animation ends
       setCurrentImageIndex(3)
       if (imageIntervalRef.current) {
         clearInterval(imageIntervalRef.current)
@@ -201,114 +201,114 @@ function Roulette({ items, onSpin, isSpinning, selectedItem, onSpinComplete, isW
     }
   }, [isAnimating])
   
-  // 모달 상태 추적 및 이미지 표시 제어
+  // Track modal state and control image display
   useEffect(() => {
     if (isWinnerModalOpen) {
-      // 모달이 열렸을 때
+      // When modal opens
       wasModalOpenRef.current = true
       setShowButtonImage(true)
     } else if (wasModalOpenRef.current && !isAnimating) {
-      // 모달이 닫혔고, 이전에 모달이 열려있었고, 애니메이션이 끝났을 때만 button.png로 복귀
+      // Return to button.png only when modal closed, was previously open, and animation ended
       setShowButtonImage(false)
       setCurrentImageIndex(0)
       wasModalOpenRef.current = false
     }
   }, [isWinnerModalOpen, isAnimating])
   
-  // 회전 후 최종 위치에서 포인터가 가리키는 아이템을 계산하는 함수
-  // 가장 간단한 로직: 룰렛이 멈춘 후 12시 포인터(270도)가 가리키는 영역 찾기
+  // Function to calculate item at pointer position after rotation
+  // Simple logic: find region at 12 o'clock pointer (270 degrees) after wheel stops
   const getItemAtPointer = (rotation, itemAngles) => {
-    // rotation을 0~360 범위로 정규화
+    // Normalize rotation to 0~360 range
     let normalizedRotation = rotation % 360
     if (normalizedRotation < 0) normalizedRotation += 360
-    
-    // 포인터는 12시에 고정
-    // SVG path에서 (startAngle - 90)을 사용하므로, conic-gradient 0도가 12시에 렌더링됨
-    // 따라서 포인터는 conic-gradient 기준 0도 (360도는 0도와 같음)
+
+    // Pointer is fixed at 12 o'clock
+    // Since SVG path uses (startAngle - 90), conic-gradient 0 degrees renders at 12 o'clock
+    // Therefore pointer is at 0 degrees conic-gradient (360 equals 0)
     const pointerAngle = 0
-    
-    // 각 아이템의 회전 후 실제 위치 계산
+
+    // Calculate actual position of each item after rotation
     for (const { item, startAngle, endAngle } of itemAngles) {
-      // 아이템의 시작/끝 각도가 회전 후 어디에 있는지 계산
-      // 룰렛이 시계방향으로 회전하므로 각도가 증가
+      // Calculate where item's start/end angles are after rotation
+      // Angle increases as roulette rotates clockwise
       let rotatedStart = (startAngle + normalizedRotation) % 360
       if (rotatedStart < 0) rotatedStart += 360
-      
+
       let rotatedEnd = (endAngle + normalizedRotation) % 360
       if (rotatedEnd < 0) rotatedEnd += 360
-      
-      // 포인터(0도 = 12시)가 이 아이템의 회전 후 범위에 있는지 확인
+
+      // Check if pointer (0 degrees = 12 o'clock) is within item's rotated range
       if (rotatedStart < rotatedEnd) {
-        // 일반적인 경우: 회전 후에도 start < end
+        // Normal case: start < end after rotation
         if (pointerAngle >= rotatedStart && pointerAngle < rotatedEnd) {
           return item
         }
       } else {
-        // 360도 경계를 넘어가는 경우: 회전 후 start > end (예: 350도 ~ 10도)
+        // Crossing 360 boundary: start > end after rotation (e.g., 350 ~ 10 degrees)
         if (pointerAngle >= rotatedStart || pointerAngle < rotatedEnd) {
           return item
         }
       }
     }
-    
+
     return null
   }
 
-  // 수량이 0보다 큰 상품만 필터링
+  // Filter only items with quantity > 0
   const availableItems = items.filter(item => item.quantity > 0)
   
   useEffect(() => {
     if (isSpinning && selectedItem && availableItems.length > 0) {
-      // 각 상품의 각도 계산 (최소 각도 보장)
+      // Calculate angles for each item (ensuring minimum angle)
       const itemAngles = calculateItemAngles(availableItems)
 
-      // 선택된 아이템의 중간 각도 찾기
+      // Find center angle of selected item
       const selectedAngleInfo = itemAngles.find(({ item }) => item.name === selectedItem.name)
       if (selectedAngleInfo) {
-        // 선택된 아이템의 중간 각도 (conic-gradient 기준: 0도는 오른쪽, 3시)
+        // Center angle of selected item (conic-gradient: 0 degrees is right, 3 o'clock)
         const itemCenterAngle = (selectedAngleInfo.startAngle + selectedAngleInfo.endAngle) / 2
-        
-        // 가장 간단한 계산:
-        // 포인터는 0도(12시)에 고정 (conic-gradient 기준)
-        // 목표: (itemCenterAngle + finalRotation) % 360 = 0
+
+        // Simplest calculation:
+        // Pointer fixed at 0 degrees (12 o'clock) in conic-gradient
+        // Goal: (itemCenterAngle + finalRotation) % 360 = 0
         // finalRotation = (0 - itemCenterAngle) % 360 + n * 360 = (360 - itemCenterAngle) % 360 + n * 360
-        
-        // 현재 회전을 고려한 현재 아이템 위치
+
+        // Current item position considering current rotation
         let currentItemPosition = itemCenterAngle + currentRotation
         while (currentItemPosition < 0) currentItemPosition += 360
         while (currentItemPosition >= 360) currentItemPosition -= 360
-        
-        // 0도(12시)까지 가는 각도 계산
+
+        // Calculate angle to reach 0 degrees (12 o'clock)
         let angleTo0 = 0 - currentItemPosition
         if (angleTo0 < 0) angleTo0 += 360
-        if (angleTo0 === 0) angleTo0 = 360 // 이미 0도에 있으면 한 바퀴 더
-        
-        // 여러 바퀴 회전 (5-10바퀴)
+        if (angleTo0 === 0) angleTo0 = 360 // Add one more turn if already at 0 degrees
+
+        // Multiple rotations (5-10 turns)
         const extraRotations = (5 + Math.random() * 5) * 360
-        
-        // 최종 회전 각도
+
+        // Final rotation angle
         const finalRotation = currentRotation + angleTo0 + extraRotations
-        
-        // 검증: 회전 후 실제로 선택된 아이템이 포인터에 있는지 확인
+
+        // Verify: check if selected item is actually at pointer after rotation
         const finalItemAngles = itemAngles.map(({ item, startAngle, endAngle }) => ({
           item,
           startAngle,
           endAngle
         }))
         const itemAtPointer = getItemAtPointer(finalRotation, finalItemAngles)
-        
-        // 최종 위치 검증
+
+        // Final position verification
         let finalPosition = itemCenterAngle + finalRotation
         while (finalPosition < 0) finalPosition += 360
         while (finalPosition >= 360) finalPosition -= 360
-        
-        // 간단한 로그
+
+        // Simple log
         if (!itemAtPointer || itemAtPointer.name !== selectedItem.name) {
-          console.warn('⚠️ 당첨 오류:', {
-            선택: selectedItem.name,
-            포인터: itemAtPointer?.name || 'null',
-            최종위치: finalPosition.toFixed(2),
-            예상: 270
+          console.warn('⚠️ Winner error:', {
+            selected: selectedItem.name,
+            pointer: itemAtPointer?.name || 'null',
+            finalPosition: finalPosition.toFixed(2),
+            expected: 270
           })
         }
         
@@ -320,74 +320,74 @@ function Roulette({ items, onSpin, isSpinning, selectedItem, onSpinComplete, isW
 
   useEffect(() => {
     if (isAnimating) {
-      // 애니메이션이 끝나면 현재 회전값을 업데이트하고 멈춤
+      // Update current rotation value and stop after animation ends
       const timer = setTimeout(() => {
         setCurrentRotation(targetRotation)
         setIsAnimating(false)
-        
-        // 룰렛이 멈춘 후 실제 12시 포인터가 가리키는 경품 찾기
+
+        // Find prize at 12 o'clock pointer after wheel stops
         const availableItems = items.filter(item => item.quantity > 0)
         if (availableItems.length > 0) {
-          // 각 상품의 각도 계산 (최소 각도 보장)
+          // Calculate angles for each item (ensuring minimum angle)
           const itemAngles = calculateItemAngles(availableItems).map(({ item, startAngle, endAngle }) => ({
             item,
             startAngle,
             endAngle
           }))
-          
-          // 실제 멈춘 위치에서 12시 포인터가 가리키는 경품 찾기
+
+          // Find prize at 12 o'clock pointer from actual stop position
           const winner = getItemAtPointer(targetRotation, itemAngles)
-          
-          // 디버깅: 간단한 로그
+
+          // Debug: simple log
           const normalizedRotation = targetRotation % 360 < 0 ? (targetRotation % 360) + 360 : targetRotation % 360
-          console.log('=== 당첨 경품 계산 ===')
-          console.log('회전 각도:', targetRotation.toFixed(2), '정규화:', normalizedRotation.toFixed(2))
-          console.log('포인터 위치: 270도 (12시)')
-          
+          console.log('=== Winner Calculation ===')
+          console.log('Rotation angle:', targetRotation.toFixed(2), 'Normalized:', normalizedRotation.toFixed(2))
+          console.log('Pointer position: 270 degrees (12 o\'clock)')
+
           const debugInfo = itemAngles.map(({ item, startAngle, endAngle }) => {
             let rotatedStart = (startAngle + normalizedRotation) % 360
             if (rotatedStart < 0) rotatedStart += 360
             let rotatedEnd = (endAngle + normalizedRotation) % 360
             if (rotatedEnd < 0) rotatedEnd += 360
-            
+
             let inRange = false
-            const pointerAngle = 0 // 12시는 conic-gradient 기준 0도
+            const pointerAngle = 0 // 12 o'clock is 0 degrees in conic-gradient
             if (rotatedStart < rotatedEnd) {
               inRange = pointerAngle >= rotatedStart && pointerAngle < rotatedEnd
             } else {
-              // 360도 경계를 넘어가는 경우 (예: 350도 ~ 10도)
+              // Crossing 360 boundary (e.g., 350 ~ 10 degrees)
               inRange = pointerAngle >= rotatedStart || pointerAngle < rotatedEnd
             }
-            
+
             return {
-              이름: item.name,
-              회전후범위: `${rotatedStart.toFixed(1)}° ~ ${rotatedEnd.toFixed(1)}°`,
-              범위내: inRange ? '✓' : '✗'
+              name: item.name,
+              rotatedRange: `${rotatedStart.toFixed(1)}° ~ ${rotatedEnd.toFixed(1)}°`,
+              inRange: inRange ? '✓' : '✗'
             }
           })
           console.table(debugInfo)
-          console.log('당첨 경품:', winner ? winner.name : 'null')
-          
-          // 룰렛이 완전히 멈춘 후 0.5초 뒤에 팝업 표시
+          console.log('Winner:', winner ? winner.name : 'null')
+
+          // Show popup 0.5 seconds after wheel completely stops
           if (winner && onSpinComplete) {
             popupTimerRef.current = setTimeout(() => {
               onSpinComplete(winner)
               popupTimerRef.current = null
-            }, 500) // 0.5초 지연
+            }, 500) // 0.5 second delay
           } else if (!winner) {
-            console.error('당첨 경품을 찾을 수 없습니다!')
+            console.error('Could not find winning prize!')
           }
         }
-      }, 4000) // 4초 애니메이션
-      
+      }, 4000) // 4 second animation
+
       return () => {
         clearTimeout(timer)
-        // 팝업 타이머는 cleanup에서 클리어하지 않음 (1초 후 팝업이 뜨도록 유지)
+        // Don't clear popup timer in cleanup (keep popup appearing after delay)
       }
     }
   }, [isAnimating, targetRotation, items, onSpinComplete])
 
-  // 컴포넌트 언마운트 시 팝업 타이머 및 이미지 인터벌 정리
+  // Clean up popup timer and image interval on component unmount
   useEffect(() => {
     return () => {
       if (popupTimerRef.current) {
@@ -418,22 +418,22 @@ function Roulette({ items, onSpin, isSpinning, selectedItem, onSpinComplete, isW
             fontSize: 'clamp(14px, 2vw, 20px)',
             textAlign: 'center'
           }}>
-            상품을 추가해주세요
+            Please add items
           </div>
         </Wheel>
         <CenterButton disabled />
-        <Pointer src="/images/Polygon.png" alt="포인터" />
+        <Pointer src="/images/Polygon.png" alt="Pointer" />
       </RouletteContainer>
     )
   }
 
-  // 각 상품의 각도 계산 (최소 각도 보장)
+  // Calculate angles for each item (ensuring minimum angle)
   const itemAngles = calculateItemAngles(availableItems)
 
-  // 회전 각도 결정
+  // Determine rotation angle
   const rotation = isAnimating ? targetRotation : currentRotation
 
-  // SVG path 계산 함수
+  // SVG path calculation function
   const createSectorPath = (startAngle, endAngle) => {
     const startRad = (startAngle - 90) * Math.PI / 180
     const endRad = (endAngle - 90) * Math.PI / 180
@@ -463,16 +463,16 @@ function Roulette({ items, onSpin, isSpinning, selectedItem, onSpinComplete, isW
               const startColor = isGradient1 ? '#4037D3' : '#FB6213'
               const endColor = isGradient1 ? '#FB6211' : '#E22E59'
               
-              // 각 구역의 중앙 각도 계산
+              // Calculate center angle of each sector
               const sectorAngle = itemAngles[index].endAngle - itemAngles[index].startAngle
               const centerAngle = itemAngles[index].startAngle + sectorAngle / 2
               const centerRad = (centerAngle - 90) * Math.PI / 180
-              
-              // 그라데이션 방향 계산 (135도 방향)
+
+              // Calculate gradient direction (135 degrees)
               const gradientAngle = centerAngle - 45
               const gradientRad = gradientAngle * Math.PI / 180
-              
-              // 그라데이션의 시작점과 끝점 계산
+
+              // Calculate gradient start and end points
               const x1 = 50 + 50 * Math.cos(gradientRad)
               const y1 = 50 + 50 * Math.sin(gradientRad)
               const x2 = 50 - 50 * Math.cos(gradientRad)
@@ -490,7 +490,7 @@ function Roulette({ items, onSpin, isSpinning, selectedItem, onSpinComplete, isW
             const gradientId = `gradient-${index}`
             const path = createSectorPath(startAngle, endAngle)
             
-            // 구역 경계선 계산 (원의 중심에서 가장자리까지)
+            // Calculate sector boundary (from center to edge of circle)
             const startRad = (startAngle - 90) * Math.PI / 180
             const endRad = (endAngle - 90) * Math.PI / 180
             const radius = 50
@@ -498,32 +498,32 @@ function Roulette({ items, onSpin, isSpinning, selectedItem, onSpinComplete, isW
             const startY = 50 + radius * Math.sin(startRad)
             const endX = 50 + radius * Math.cos(endRad)
             const endY = 50 + radius * Math.sin(endRad)
-            
-            // 텍스트 위치 계산 (원의 중심에서 약 30% 떨어진 곳)
+
+            // Calculate text position (about 30% from center of circle)
             const sectorAngle = endAngle - startAngle
             const centerAngle = startAngle + sectorAngle / 2
             const centerRad = (centerAngle - 90) * Math.PI / 180
-            const textRadius = 30 // 원의 중심에서 30% 떨어진 위치
+            const textRadius = 30 // 30% from center
             const textX = 50 + textRadius * Math.cos(centerRad)
             const textY = 50 + textRadius * Math.sin(centerRad)
-            
-            // 텍스트 회전 각도: 텍스트가 원의 중심을 향하도록
-            // centerRad는 텍스트 위치의 각도 (0도가 위쪽)
-            // 텍스트가 원의 중심을 향하려면 centerRad + 180도로 회전
+
+            // Text rotation angle: orient text toward center of circle
+            // centerRad is angle of text position (0 degrees is top)
+            // Rotate by centerRad + 180 degrees to orient text toward center
             const textRotation = (centerRad * 180 / Math.PI) + 180
-            
-            // 첫 번째 상품과 마지막 상품 확인
+
+            // Check if first or last item
             const isFirstItem = index === 0
             const isLastItem = index === itemAngles.length - 1
-            
+
             return (
               <g key={index}>
-                {/* 구역 */}
+                {/* Sector */}
                 <path
                   d={path}
                   fill={`url(#${gradientId})`}
                 />
-                {/* 구역 경계선 (깔끔한 흰색 선) */}
+                {/* Sector boundary (clean white line) */}
                 <line
                   x1="50"
                   y1="50"
@@ -578,7 +578,7 @@ function Roulette({ items, onSpin, isSpinning, selectedItem, onSpinComplete, isW
           />
         )}
       </CenterButton>
-      <Pointer src="/images/Polygon.png" alt="포인터" />
+      <Pointer src="/images/Polygon.png" alt="Pointer" />
     </RouletteContainer>
   )
 }

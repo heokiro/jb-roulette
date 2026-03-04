@@ -1,55 +1,55 @@
 # JetBrains Roulette
 
-룰렛 게임 애플리케이션
+Roulette Game Application
 
-## 개발
+## Development
 
 ```bash
 npm install
 npm run dev
 ```
 
-## 빌드
+## Build
 
 ```bash
 npm run build
 ```
 
-## Firebase 호스팅 배포
+## Firebase Hosting Deployment
 
-### 수동 배포
+### Manual Deployment
 
 ```bash
 npm run deploy
 ```
 
-### 자동 배포 설정 (GitHub Actions)
+### Automatic Deployment Setup (GitHub Actions)
 
-이 프로젝트는 GitHub Actions를 통해 자동 배포가 설정되어 있습니다. `main` 또는 `master` 브랜치에 push하면 자동으로 Firebase Hosting에 배포됩니다.
+This project is configured for automatic deployment via GitHub Actions. Pushing to the `main` or `master` branch will automatically deploy to Firebase Hosting.
 
-#### 설정 방법
+#### Setup Instructions
 
-1. **Firebase 토큰 생성**
-   - 로컬 터미널에서 다음 명령 실행:
+1. **Generate Firebase Token**
+   - Run the following command in your local terminal:
      ```bash
      firebase login:ci
      ```
-   - 브라우저가 열리면 Google 계정으로 로그인하고 권한을 부여하세요
-   - 터미널에 출력된 토큰을 복사하세요
+   - When the browser opens, log in with your Google account and grant permissions
+   - Copy the token displayed in the terminal
 
-2. **GitHub Secrets 설정**
-   - GitHub 저장소로 이동
+2. **Configure GitHub Secrets**
+   - Go to your GitHub repository
    - Settings > Secrets and variables > Actions
-   - "New repository secret" 클릭
+   - Click "New repository secret"
    - Name: `FIREBASE_TOKEN`
-   - Secret: 앞서 생성한 토큰을 붙여넣기
-   - "Add secret" 클릭
+   - Secret: Paste the token you generated earlier
+   - Click "Add secret"
 
-3. **자동 배포 확인**
-   - `main` 또는 `master` 브랜치에 코드를 push하면 자동으로 배포가 시작됩니다
-   - Actions 탭에서 배포 진행 상황을 확인할 수 있습니다
+3. **Verify Automatic Deployment**
+   - Push code to the `main` or `master` branch to trigger automatic deployment
+   - Check the Actions tab to monitor deployment progress
 
-## 기술 스택
+## Tech Stack
 
 - React
 - Vite
